@@ -1,9 +1,8 @@
-<!doctype html>
-<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="light dark"><style>html{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
-<title>คิดต้นทุน ตั้งราคา</title>
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body><title>คิดต้นทุน ตั้งราคา</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;500;600;700&display=swap">
 <style>
+
 /* Layout: one slide at a time. Projector = wide column with big type; phone = same content reflowed to one column, thumb-height buttons, fixed bottom nav.
    Palette from natural-dyed eri silk: indigo ink, lac red, saffron, teal-green. Products are told apart by colour AND badge letter. */
 :root{
@@ -166,6 +165,40 @@ body.inst .notes{display:block}
   .row{grid-template-columns:minmax(0,1fr) 5.6em auto}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* hands-on additions */
+.itm{display:grid;gap:.3em;padding:.6em 0;border-bottom:1px dashed var(--line)}
+.itm:last-of-type{border-bottom:none}
+.itm .nm{display:flex;gap:.5em;align-items:baseline;flex-wrap:wrap}
+.itm .nm .t{font-weight:600}
+.qp{display:flex;flex-wrap:wrap;gap:.4em;align-items:center}
+.qp input{width:5.8em}
+.qp .u,.qp .x{color:var(--muted);font-size:.85em}
+.qp .amt{margin-left:auto;font-family:var(--f-display);font-weight:600;font-variant-numeric:tabular-nums}
+.tag.fill{background:var(--warns);color:var(--warn)}
+.st{font-weight:700;min-width:5em}
+.st.ok{color:var(--ok)} .st.bad{color:var(--bad)}
+.gcard{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:1.1em 1.2em;font-family:var(--f-display);font-weight:600;font-size:1.5em;line-height:1.35}
+.gbtns{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11em),1fr));gap:.6em}
+.gbtn{min-height:3.4em;border-radius:12px;border:2px solid var(--c);background:var(--cs);color:var(--fg);font-weight:600;padding:.4em .8em;text-align:left}
+.gbtn small{display:block;font-weight:400;color:var(--muted);font-size:.78em}
+.g-prod{--c:var(--warn);--cs:var(--warns)} .g-mat{--c:var(--p3);--cs:var(--p3s)} .g-pack{--c:var(--p2);--cs:var(--p2s)} .g-lab{--c:var(--p1);--cs:var(--p1s)} .g-oth{--c:var(--accent);--cs:var(--accent-soft)}
+.gprog{display:flex;justify-content:space-between;gap:1em;font-weight:600}
+.slots{display:grid;gap:.5em}
+.slot{display:grid;grid-template-columns:auto 1fr;gap:.8em;align-items:center;background:var(--surface);border:2px dashed var(--line);border-radius:12px;padding:.6em .9em;min-height:3.2em}
+.slot.on{border-style:solid;border-color:var(--ok);background:var(--oks)}
+.slot i{font-style:normal;display:grid;place-items:center;width:1.8em;height:1.8em;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-weight:700}
+.wk{display:flex;flex-wrap:wrap;gap:.5em;align-items:center}
+.wk .lbl{font-size:.85em;color:var(--muted);width:100%}
+.wk input{width:6.2em;text-align:right}
+.wk b{font-family:var(--f-display);font-size:1.3em}
+.wk input.ok{border-color:var(--ok);background:var(--oks)}
+.wk input.bad{border-color:var(--bad);background:var(--bads)}
+a.btn{display:inline-block;text-decoration:none}
+.linkcard a{overflow-wrap:anywhere;word-break:break-all}
+.linkcard{display:flex;gap:1em;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1em}
+.linkcard svg{width:min(9em,45vw);height:auto;border-radius:12px;flex:none}
+.linkcard>div{min-width:0;display:grid;gap:.4em;flex:1 1 14em}
 </style>
 
 <header class="top">
@@ -180,7 +213,7 @@ body.inst .notes{display:block}
 <main id="stage" tabindex="-1"></main>
 <nav class="bar" aria-label="เปลี่ยนหน้า">
   <button id="bPrev" type="button">‹ ก่อนหน้า</button>
-  <button id="bNum" type="button" class="pg" aria-label="เปิดสารบัญ">1 / 30</button>
+  <button id="bNum" type="button" class="pg" aria-label="เปิดสารบัญ">1</button>
   <button id="bNext" type="button" class="primary">ถัดไป ›</button>
 </nav>
 <div id="toc" class="toc" hidden></div>
@@ -188,17 +221,29 @@ body.inst .notes{display:block}
 <script>
 (function(){
 'use strict';
-var KEY='eri-cost-v1';
-var GROUP={mat:'วัตถุดิบ',pack:'บรรจุภัณฑ์',lab:'แรงงาน',oth:'อื่นๆ'};
+var KEY='eri-cost-v2';
+var SLIDES_URL='https://wisuttorn.github.io/costing/';
+var CALC_URL='https://wisuttorn.github.io/costing/calculator.html';
+var QR_SLIDES="<svg xmlns='http://www.w3.org/2000/svg' width='148' height='148' class='segno'><g transform='scale(4)'><path fill='#fff' d='M0 0h37v37h-37z'/><path class='qrline' stroke='#18213a' d='M4 4.5h7m3 0h1m3 0h1m1 0h1m2 0h1m2 0h7m-29 1h1m5 0h1m3 0h1m1 0h1m2 0h1m1 0h2m3 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m4 0h1m3 0h1m1 0h1m4 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m3 0h1m2 0h1m4 0h1m3 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m4 0h2m2 0h1m3 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m1 0h4m3 0h3m1 0h2m1 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-20 1h2m1 0h2m3 0h1m2 0h1m-21 1h1m2 0h1m1 0h2m1 0h2m1 0h1m2 0h1m1 0h1m1 0h1m1 0h2m1 0h1m-22 1h1m2 0h1m2 0h2m1 0h1m1 0h1m2 0h1m3 0h1m1 0h1m2 0h1m2 0h1m-26 1h2m1 0h2m2 0h1m2 0h2m2 0h1m1 0h1m1 0h1m1 0h5m-28 1h2m2 0h2m5 0h3m2 0h1m2 0h3m1 0h1m2 0h2m-27 1h2m1 0h3m3 0h2m2 0h4m1 0h5m1 0h1m1 0h2m-29 1h1m1 0h2m5 0h3m1 0h2m4 0h2m-21 1h1m1 0h2m1 0h3m2 0h1m2 0h2m2 0h2m1 0h3m2 0h4m-29 1h1m1 0h1m1 0h2m3 0h4m2 0h1m1 0h2m1 0h2m1 0h1m1 0h1m1 0h1m-27 1h2m2 0h2m4 0h3m1 0h1m1 0h1m1 0h3m1 0h1m3 0h1m-26 1h2m3 0h1m1 0h2m1 0h3m1 0h2m3 0h3m1 0h1m2 0h1m-29 1h1m1 0h1m1 0h1m1 0h4m4 0h1m1 0h2m2 0h2m1 0h2m2 0h2m-26 1h2m2 0h1m1 0h3m2 0h2m1 0h4m2 0h2m2 0h2m-29 1h1m2 0h2m1 0h2m1 0h1m1 0h2m5 0h7m1 0h1m-19 1h1m2 0h1m2 0h1m1 0h1m2 0h2m3 0h1m1 0h3m-29 1h7m3 0h1m1 0h1m3 0h2m2 0h1m1 0h1m1 0h1m2 0h1m-28 1h1m5 0h1m1 0h2m1 0h1m2 0h1m3 0h3m3 0h4m-28 1h1m1 0h3m1 0h1m4 0h2m4 0h1m2 0h5m2 0h2m-29 1h1m1 0h3m1 0h1m1 0h2m7 0h1m2 0h1m1 0h6m-28 1h1m1 0h3m1 0h1m2 0h1m2 0h1m1 0h1m3 0h4m2 0h3m1 0h1m-29 1h1m5 0h1m2 0h1m1 0h3m2 0h6m2 0h1m2 0h1m-28 1h7m1 0h2m1 0h1m2 0h2m1 0h1m2 0h1m1 0h3m2 0h1'/></g></svg>";
+var QR_CALC="<svg xmlns='http://www.w3.org/2000/svg' width='164' height='164' class='segno'><g transform='scale(4)'><path fill='#fff' d='M0 0h41v41h-41z'/><path class='qrline' stroke='#18213a' d='M4 4.5h7m2 0h2m2 0h1m2 0h5m1 0h2m2 0h7m-33 1h1m5 0h1m2 0h1m3 0h5m4 0h1m1 0h1m1 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m3 0h2m3 0h2m1 0h3m3 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h2m4 0h3m5 0h1m1 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m2 0h3m1 0h1m1 0h2m2 0h3m2 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m1 0h3m1 0h5m1 0h1m2 0h2m1 0h1m1 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-25 1h2m2 0h1m1 0h2m2 0h1m2 0h1m-22 1h1m1 0h5m5 0h4m1 0h1m2 0h1m1 0h1m3 0h5m-30 1h2m2 0h1m1 0h1m1 0h1m1 0h1m2 0h1m1 0h1m2 0h3m1 0h1m2 0h2m1 0h2m1 0h1m-33 1h1m5 0h2m3 0h2m2 0h2m1 0h1m1 0h1m4 0h2m1 0h1m1 0h2m-31 1h1m1 0h2m4 0h3m2 0h1m1 0h1m4 0h1m6 0h4m-32 1h4m1 0h2m4 0h2m5 0h2m5 0h1m1 0h3m2 0h1m-33 1h1m1 0h2m3 0h2m1 0h1m1 0h1m1 0h3m6 0h1m2 0h1m2 0h1m1 0h2m-33 1h2m1 0h2m1 0h2m1 0h1m3 0h2m7 0h1m2 0h2m4 0h1m-32 1h1m3 0h1m2 0h1m2 0h5m1 0h1m3 0h3m1 0h4m1 0h2m-30 1h2m3 0h3m1 0h2m1 0h1m3 0h1m1 0h1m2 0h1m2 0h1m1 0h2m3 0h1m-26 1h5m1 0h1m3 0h4m1 0h2m1 0h3m1 0h2m1 0h1m-32 1h1m2 0h3m1 0h1m4 0h1m1 0h3m2 0h1m1 0h1m4 0h2m1 0h2m-32 1h2m6 0h2m1 0h3m2 0h6m1 0h8m-28 1h2m1 0h1m2 0h1m1 0h1m1 0h1m2 0h1m5 0h1m1 0h2m1 0h3m1 0h1m-32 1h1m2 0h1m1 0h1m3 0h2m1 0h1m2 0h1m2 0h4m1 0h1m1 0h2m2 0h2m1 0h1m-33 1h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h2m1 0h4m1 0h1m3 0h2m2 0h2m1 0h1m-32 1h1m3 0h1m3 0h3m1 0h1m2 0h1m2 0h1m1 0h2m3 0h3m2 0h3m-33 1h1m1 0h1m2 0h2m1 0h1m1 0h1m1 0h1m1 0h2m1 0h3m2 0h7m-21 1h2m1 0h1m1 0h2m1 0h1m1 0h3m2 0h2m3 0h1m1 0h3m-33 1h7m2 0h1m1 0h3m1 0h2m1 0h1m2 0h1m1 0h2m1 0h1m1 0h1m1 0h2m-32 1h1m5 0h1m1 0h1m2 0h2m2 0h1m3 0h3m1 0h2m3 0h5m-33 1h1m1 0h3m1 0h1m1 0h1m3 0h2m4 0h2m2 0h1m1 0h6m-30 1h1m1 0h3m1 0h1m1 0h2m1 0h2m1 0h4m1 0h2m1 0h4m2 0h2m1 0h2m-33 1h1m1 0h3m1 0h1m1 0h3m1 0h1m1 0h1m2 0h1m4 0h1m3 0h2m1 0h1m-30 1h1m5 0h1m2 0h2m2 0h1m2 0h1m1 0h1m1 0h2m3 0h1m2 0h3m-31 1h7m1 0h2m1 0h1m1 0h2m2 0h1m5 0h3m1 0h1m3 0h1'/></g></svg>";
+var GROUP={mat:'ค่าวัตถุดิบ',lab:'ค่าแรงงาน',pack:'ค่าบรรจุภัณฑ์',prod:'ค่าใช้จ่ายในการผลิตอื่นๆ',oth:'ค่าใช้จ่ายอื่น'};
+
+/* item = [ชื่อ, ปริมาณ, หน่วย, ราคาต่อหน่วย, กลุ่ม, ใส่เอง] ข้อมูลจากใบบันทึกสูตรชุมชน */
 var DEF={
-  fresh:{name:'น้ำพริกสดดักแด้ไหมอีรี่',short:'น้ำพริกสด',sub:'สูตรคั่วหอม',unit:'กระปุก',badge:'ก',cls:'p1',made:50,
-    items:[['ดักแด้ไหมอีรี่',500,'mat'],['พริก กระเทียม หอมแดง',300,'mat'],['น้ำปลา น้ำตาล น้ำมัน',200,'mat'],['กระปุก ฝา ซีล ฉลาก (50 ชุด)',250,'pack'],['ค่าแรง 2 คน',200,'lab'],['แก๊ส ไฟ น้ำ',150,'oth']]},
-  dry:{name:'น้ำพริกแห้งกรอบดักแด้ไหมอีรี่',short:'น้ำพริกแห้งกรอบ',sub:'สูตรคั่วแห้ง',unit:'กระปุก',badge:'ข',cls:'p2',made:40,
-    items:[['ดักแด้ไหมอีรี่',400,'mat'],['เครื่องเทศและเครื่องปรุง',200,'mat'],['กระปุก ฟอยล์ซีล ฉลาก (40 ชุด)',240,'pack'],['ค่าแรง 2 คน',200,'lab'],['แก๊ส ไฟ น้ำ',160,'oth']]},
-  crisp:{name:'ข้าวเกรียบดักแด้ไหมอีรี่',short:'ข้าวเกรียบดักแด้',sub:'มัญจาพองกรอบ',unit:'ถุง',badge:'ค',cls:'p3',made:100,
-    items:[['ดักแด้ไหมอีรี่',300,'mat'],['แป้งและเครื่องปรุง',300,'mat'],['น้ำมันทอด',200,'mat'],['ถุงและฉลาก (100 ใบ)',200,'pack'],['ค่าแรง 4 คน',400,'lab'],['แก๊ส ไฟ น้ำ',100,'oth']]}
+  dry:{short:'น้ำพริกแห้ง',sub:'สูตรชุมชน',unit:'กระปุก',badge:'ก',cls:'p1',made:20,
+    batch:'ดักแด้ 1 กก. · ใช้เวลา 1 ชั่วโมง',equip:'เตาแก๊ส ครก สาก ถาดตาก กะทะ',
+    items:[['ดักแด้ไหม',1,'กก.',100,'mat'],['พริกแห้ง',0.1,'กก.',200,'mat'],['กระเทียม',0.1,'กก.',200,'mat'],['หอมแดง',0.1,'กก.',200,'mat'],['ปลาร้า',1,'ช้อนโต๊ะ',5,'mat'],['เกลือ',1,'ช้อนโต๊ะ',5,'mat'],['ผงนัว',1,'ช้อนโต๊ะ',5,'mat'],['ใบมะกรูด',0.1,'กก.',50,'mat'],['ตะไคร้',0.1,'กก.',200,'mat'],
+      ['กระปุก ฝา ฉลาก',20,'ชุด',0,'pack',1],['แก๊ส',1,'ชั่วโมง',0,'prod',1],['ค่าแรง',1,'ชั่วโมง',0,'lab',1]]},
+  crisp:{short:'ข้าวเกรียบดักแด้',sub:'สูตรชุมชน',unit:'ถุง',badge:'ข',cls:'p2',made:15,
+    batch:'ดักแด้ 300 กรัม ได้ 15 ถุง · ใช้เวลา 4 วัน รวมตากแผ่น',equip:'หม้อนึ่ง ครก ถาดตาก',
+    items:[['ดักแด้ไหม',0.3,'กก.',100,'mat'],['แป้งมันสำปะหลัง',0.25,'กก.',40,'mat'],['เกลือ',1,'ช้อนชา',0.5,'mat'],['พริกไทยป่น',0.5,'ช้อนชา',7,'mat'],['น้ำมันพืช',1,'ลิตร',46,'mat'],
+      ['ถุงแกงกันร้อน (1 ชุด 15 ใบ)',1,'ชุด',5,'pack'],['ถ่าน',1,'ชั่วโมง',20,'prod'],['ค่าแรง',0,'ชั่วโมง',0,'lab',1]]},
+  fresh:{short:'น้ำพริกสด',sub:'สูตรชุมชน',unit:'กระปุก',badge:'ค',cls:'p3',made:14,
+    batch:'ดักแด้ 1 กก. ได้ 14 กระปุก · ใช้เวลา 6 ชั่วโมง 30 นาที',equip:'เตาถ่าน เตาอบโซล่าเซล ครกและสาก ถาดตาก ทัพพี ถ้วยแบ่งวัตถุดิบ ช้อน ตาชั่ง',
+    items:[['ดักแด้ไหม',1,'กก.',100,'mat'],['พริกสด',0.1,'กก.',200,'mat'],['กระเทียม',0.1,'กก.',200,'mat'],['หอมแดง',0.1,'กก.',200,'mat'],['ผงนัว',1,'ช้อนชา',5,'mat'],['เกลือ',1,'ช้อนชา',5,'mat'],['ใบมะกรูด',0.5,'กก.',60,'mat'],['มะขามเปียก (2 ช้อนโต๊ะ)',1,'ชุด',15,'mat'],['น้ำตาลทราย (3 ช้อนโต๊ะ)',1,'ชุด',10,'mat'],['น้ำมันพืช',1,'กก.',25,'mat'],
+      ['กระปุก ฝา ฉลาก',14,'ชุด',0,'pack',1],['ถ่าน/ไฟฟ้า เตาอบ',6.5,'ชั่วโมง',0,'prod',1],['ค่าแรง',6.5,'ชั่วโมง',0,'lab',1]]}
 };
-var PIDS=['fresh','dry','crisp'];
+var PIDS=['dry','crisp','fresh'];
 var CHECKS=[
  ['ต้นทุนวัตถุดิบหลัก','ดักแด้ไหมอีรี่ พริก กระเทียม หอมแดง'],
  ['ต้นทุนเครื่องปรุง','น้ำปลา น้ำตาล เกลือ น้ำมัน เครื่องเทศ'],
@@ -213,49 +258,62 @@ var CHECKS=[
 ];
 
 /* ---------- state ---------- */
-function mkP(pid){var d=DEF[pid];return{items:d.items.map(function(x){return{n:x[0],v:x[1],g:x[2]}}),made:d.made,profit:35,step:5,price:null,fee:10}}
-function mkS(){var p={};PIDS.forEach(function(k){p[k]=mkP(k)});return{p:p,quiz:{},check:[],am:{fresh:{p:1200,r:60},dry:{p:1200,r:60},crisp:{p:1200,r:60}},lab:{fresh:{n:2,r:100},dry:{n:2,r:100},crisp:{n:4,r:100}},scale:1,tab:'fresh'}}
+function mkP(pid){var d=DEF[pid];return{items:d.items.map(function(x){return{n:x[0],q:x[1],u:x[2],p:x[3],g:x[4],f:x[5]?1:0}}),made:d.made,profit:35,step:1,price:null,fee:10,sold:null}}
+function mkAm(){var o={};PIDS.forEach(function(k){o[k]={p:1200,r:60}});return o}
+function mkLab(){var o={};PIDS.forEach(function(k){o[k]={n:2,r:100}});return o}
+function mkEx(){var o={};PIDS.forEach(function(k){o[k]={}});return o}
+function mkS(){var p={};PIDS.forEach(function(k){p[k]=mkP(k)});return{p:p,quiz:{},wk:{},sub:'cost',check:[],ex:mkEx(),exs:{dry:'',crisp:'',fresh:''},am:mkAm(),lab:mkLab(),scale:1,tab:'crisp'}}
 var S=mkS();
 try{var raw=JSON.parse(localStorage.getItem(KEY)||'null');
   if(raw&&typeof raw==='object'){
-    PIDS.forEach(function(k){var r=raw.p&&raw.p[k];if(r&&Array.isArray(r.items)&&r.items.length&&typeof r.made==='number'){S.p[k]=Object.assign(mkP(k),r)}});
-    ['quiz','check'].forEach(function(k){if(raw[k]&&typeof raw[k]==='object')S[k]=raw[k]});
-    if(raw.am&&raw.am.fresh)S.am=Object.assign(S.am,raw.am);if(raw.lab&&raw.lab.fresh)S.lab=Object.assign(S.lab,raw.lab);
+    PIDS.forEach(function(k){var r=raw.p&&raw.p[k];if(r&&Array.isArray(r.items)&&r.items.length&&typeof r.made==='number'&&r.items[0]&&'q' in r.items[0]){S.p[k]=Object.assign(mkP(k),r)}});
+    ['quiz','wk','ex','exs'].forEach(function(k){if(raw[k]&&typeof raw[k]==='object')S[k]=Object.assign(S[k],raw[k])});
+    if(Array.isArray(raw.check))S.check=raw.check;
+    if(raw.am&&raw.am.dry)S.am=Object.assign(S.am,raw.am);if(raw.lab&&raw.lab.dry)S.lab=Object.assign(S.lab,raw.lab);
     if(typeof raw.scale==='number')S.scale=Math.min(1.5,Math.max(.85,raw.scale));
-    if(PIDS.indexOf(raw.tab)>=0)S.tab=raw.tab;
+    if(PIDS.indexOf(raw.tab)>=0)S.tab=raw.tab;if(['cost','price','fee','pl'].indexOf(raw.sub)>=0)S.sub=raw.sub;
   }}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
 /* ---------- helpers ---------- */
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function fmt(x,d){d=d==null?2:d;return isFinite(x)?(+x.toFixed(d)).toLocaleString('th-TH',{maximumFractionDigits:d}):'–'}
-function num(v){var x=parseFloat(v);return isFinite(x)&&x>=0?x:0}
+function num(v){var x=parseFloat(String(v).replace(/,/g,''));return isFinite(x)&&x>=0?x:0}
+function pv(v){if(v===undefined||v===null||String(v).trim()==='')return null;var x=parseFloat(String(v).replace(/,/g,''));return isFinite(x)?x:null}
+function r2(x){return Math.round(x*100)/100}
+function amt(it){return r2(num(it.q)*num(it.p))}
+function defAmt(it){return r2(it[1]*it[3])}
+function defSum(pid,onlyDoc){var t=0;DEF[pid].items.forEach(function(i){if(!(onlyDoc&&i[5]))t+=defAmt(i)});return t}
+function defUnit(pid){return defSum(pid,true)/DEF[pid].made}
 function compute(pid){
-  var s=S.p[pid],total=0;s.items.forEach(function(i){total+=num(i.v)});
+  var s=S.p[pid],total=0;s.items.forEach(function(i){total+=amt(i)});
   var made=num(s.made),unit=made>0?total/made:NaN;
-  var step=s.step||5,sug=unit*(1+s.profit/100),rounded=Math.max(step,Math.round(sug/step)*step);
+  var step=s.step||1,sug=unit*(1+s.profit/100),rounded=Math.max(step,Math.round(sug/step)*step);
   var manual=s.price!==null&&s.price!==''&&isFinite(parseFloat(s.price));
   var sell=manual?num(s.price):rounded;
   var gpct=unit>0?(sell-unit)/unit*100:NaN;
-  var recv=sell*(1-s.fee/100),real=recv-unit,realPct=unit>0?real/unit*100:NaN;
+  var sold=(s.sold===null||s.sold===undefined||s.sold==='')?made:num(s.sold);var recv=sell*(1-s.fee/100),real=recv-unit,realPct=unit>0?real/unit*100:NaN;
   var need=unit*(1+s.profit/100)/(1-s.fee/100);
-  var plan=made>0?(function(){var t=0;DEF[pid].items.forEach(function(i){t+=i[1]});return t/DEF[pid].made})():NaN;
-  return{total:total,made:made,unit:unit,lo:unit*1.3,hi:unit*1.4,sug:sug,rounded:rounded,sell:sell,manual:manual,gpct:gpct,recv:recv,real:real,realPct:realPct,need:need,plan:plan,fee:s.fee,profit:s.profit};
+  return{total:total,made:made,unit:unit,lo:unit*1.3,hi:unit*1.4,sug:sug,rounded:rounded,sell:sell,manual:manual,gpct:gpct,recv:recv,real:real,realPct:realPct,need:need,plan:defUnit(pid),fee:s.fee,profit:s.profit,sold:sold,revT:sell*sold,recvT:recv*sold,plT:recv*sold-total};
 }
 function pn(pid){var d=DEF[pid];return'<span class="pname '+d.cls+'"><span class="badge" aria-hidden="true">'+d.badge+'</span><b>'+d.short+'</b></span>'}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
 
-/* ---------- calculator ---------- */
+/* ---------- calculator parts ---------- */
 function partCost(pid){
-  var s=S.p[pid],d=DEF[pid],h='<section class="part"><h2>รายการต้นทุนทั้งรอบ <span class="small muted">หน่วย: บาท</span></h2><div class="rows">';
+  var s=S.p[pid],d=DEF[pid],h='<section class="part"><h2>รายการต้นทุนทั้งรอบ <span class="small muted">ปริมาณ × ราคาต่อหน่วย = เงิน (บาท)</span></h2><div>';
   s.items.forEach(function(it,i){
-    var nm=DEF[pid].items.some(function(x){return x[0]===it.n})?'<span class="t">'+esc(it.n)+'</span>':'<input type="text" id="n-'+pid+i+'" data-k="iname" data-pid="'+pid+'" data-i="'+i+'" value="'+esc(it.n)+'" aria-label="ชื่อรายการ">';
-    h+='<div class="row"><div class="nm">'+nm+'<span class="tag" style="justify-self:start">'+GROUP[it.g||'oth']+'</span></div>'+
-       '<input type="number" inputmode="decimal" min="0" id="v-'+pid+i+'" data-k="item" data-pid="'+pid+'" data-i="'+i+'" aria-label="ราคา '+esc(it.n)+'">'+
-       '<button class="ib" type="button" data-act="del" data-pid="'+pid+'" data-i="'+i+'" aria-label="ลบรายการ">✕</button></div>';
+    var custom=!DEF[pid].items.some(function(x){return x[0]===it.n});
+    var nm=custom?'<input type="text" id="n-'+pid+i+'" data-k="iname" data-pid="'+pid+'" data-i="'+i+'" value="'+esc(it.n)+'" aria-label="ชื่อรายการ">':'<span class="t">'+esc(it.n)+'</span>';
+    h+='<div class="itm"><div class="nm">'+nm+'<span class="tag">'+GROUP[it.g||'oth']+'</span>'+(it.f?'<span class="tag fill">ใส่เอง</span>':'')+'</div>'+
+       '<div class="qp"><input type="number" inputmode="decimal" min="0" step="any" id="q-'+pid+i+'" data-k="iq" data-pid="'+pid+'" data-i="'+i+'" aria-label="ปริมาณ '+esc(it.n)+'"><span class="u">'+esc(it.u)+'</span><span class="x">×</span>'+
+       '<input type="number" inputmode="decimal" min="0" step="any" id="p-'+pid+i+'" data-k="ip" data-pid="'+pid+'" data-i="'+i+'" aria-label="ราคาต่อหน่วย '+esc(it.n)+'"><span class="u">บาท/'+esc(it.u)+'</span><span class="x">=</span>'+
+       '<span class="amt"><span data-o="amt" data-pid="'+pid+'" data-i="'+i+'"></span> บาท</span>'+
+       '<button class="ib" type="button" data-act="del" data-pid="'+pid+'" data-i="'+i+'" aria-label="ลบรายการ">✕</button></div></div>';
   });
   h+='</div><div><button class="btn" type="button" data-act="add" data-pid="'+pid+'">+ เพิ่มรายการที่ลืม</button></div>'+
    '<div class="eq"><div class="t"><span>ต้นทุนรวมทั้งรอบ</span><b data-o="total" data-pid="'+pid+'"></b><i>บาท</i></div><div class="op" aria-hidden="true">÷</div>'+
-   '<div class="t"><span>ได้ '+d.unit+'ที่ขายได้จริง</span><input type="number" inputmode="numeric" min="0" id="m-'+pid+'" data-k="made" data-pid="'+pid+'" aria-label="จำนวนที่ขายได้จริง"><i>'+d.unit+'</i></div><div class="op" aria-hidden="true">=</div>'+
+   '<div class="t"><span>ได้'+d.unit+'ที่ขายได้จริง</span><input type="number" inputmode="numeric" min="0" id="m-'+pid+'" data-k="made" data-pid="'+pid+'" aria-label="จำนวนที่ขายได้จริง"><i>'+d.unit+'</i></div><div class="op" aria-hidden="true">=</div>'+
    '<div class="t hi"><span>ต้นทุนต่อ'+d.unit+'</span><b data-o="unit" data-pid="'+pid+'"></b><i>บาทต่อ'+d.unit+'</i></div></div></section>';
   return h;
 }
@@ -263,9 +321,9 @@ function partMade(pid){
   var d=DEF[pid];
   return'<section class="part"><h2>ถ้าได้จำนวนไม่เท่าแผน ต้นทุนต่อ'+d.unit+'เปลี่ยนไปเท่าไร</h2>'+
   '<div class="kv"><div><span>ต้นทุนรวมทั้งรอบ</span><b><span data-o="total" data-pid="'+pid+'"></span> บาท</b></div>'+
-  '<div><span>ตามแผน ('+d.made+' '+d.unit+')</span><b><span data-o="plan" data-pid="'+pid+'"></span> บาท</b></div></div>'+
+  '<div><span>ตามแผน ('+d.made+' '+d.unit+') ต้นทุนต่อ'+d.unit+'</span><b><span data-o="plan" data-pid="'+pid+'"></span> บาท</b></div></div>'+
   '<div class="lab"><label for="r-'+pid+'">ได้จริงกี่'+d.unit+'</label><span><span data-o="made" data-pid="'+pid+'"></span> '+d.unit+'</span></div>'+
-  '<input type="range" id="r-'+pid+'" min="10" max="'+Math.round(d.made*1.6)+'" step="1" data-k="made" data-pid="'+pid+'">'+
+  '<input type="range" id="r-'+pid+'" min="1" max="'+Math.max(30,Math.round(d.made*1.6))+'" step="1" data-k="made" data-pid="'+pid+'">'+
   '<div class="eq"><div class="t"><span>ต้นทุนรวม</span><b data-o="total" data-pid="'+pid+'"></b><i>บาท</i></div><div class="op" aria-hidden="true">÷</div>'+
   '<div class="t"><span>ได้จริง</span><b data-o="made" data-pid="'+pid+'"></b><i>'+d.unit+'</i></div><div class="op" aria-hidden="true">=</div>'+
   '<div class="t hi"><span>ต้นทุนต่อ'+d.unit+'</span><b data-o="unit" data-pid="'+pid+'"></b><i>บาท</i></div></div>'+
@@ -300,75 +358,93 @@ function partFee(pid){
 }
 function partAm(pid){var d=DEF[pid];
   return'<section class="part"><h2>ของที่ซื้อครั้งเดียว แบ่งเป็นต้นทุนต่อรอบ</h2>'+
-  '<div class="eq"><div class="t"><span>ราคาอุปกรณ์ที่ซื้อครั้งเดียว</span><input type="number" inputmode="decimal" min="0" id="amp" data-k="amp" data-pid="'+pid+'" aria-label="ราคาเครื่อง"><i>บาท</i></div><div class="op" aria-hidden="true">÷</div>'+
+  '<div class="eq"><div class="t"><span>ราคาอุปกรณ์ (เช่น กะทะ หม้อนึ่ง เครื่องซีล)</span><input type="number" inputmode="decimal" min="0" id="amp" data-k="amp" data-pid="'+pid+'" aria-label="ราคาอุปกรณ์"><i>บาท</i></div><div class="op" aria-hidden="true">÷</div>'+
   '<div class="t"><span>คาดว่าใช้ได้กี่รอบ</span><input type="number" inputmode="numeric" min="1" id="amr" data-k="amr" data-pid="'+pid+'" aria-label="จำนวนรอบ"><i>รอบ</i></div><div class="op" aria-hidden="true">=</div>'+
-  '<div class="t hi"><span>ค่าสึกหรอต่อรอบ</span><b data-o="amRound"></b><i>บาทต่อรอบ</i></div></div>'+
-  '<div class="kv"><div><span>ถ้าผลิตรอบละ '+d.made+' '+d.unit+' คิดเป็น'+d.unit+'ละ</span><b><span data-o="amUnit"></span> บาท</b></div></div></section>';
-}
+  '<div class="t hi"><span>ค่าสึกหรอต่อรอบ</span><b data-o="amRound" data-pid="'+pid+'"></b><i>บาทต่อรอบ</i></div></div>'+
+  '<div class="kv"><div><span>ถ้าผลิตรอบละ '+d.made+' '+d.unit+' คิดเป็น'+d.unit+'ละ</span><b><span data-o="amUnit" data-pid="'+pid+'"></span> บาท</b></div></div></section>';}
 function partLab(pid){var d=DEF[pid];
   return'<section class="part"><h2>ค่าแรงของคนในกลุ่มก็เป็นต้นทุน</h2>'+
   '<div class="eq"><div class="t"><span>จำนวนคนที่ทำ</span><input type="number" inputmode="numeric" min="0" id="lan" data-k="labn" data-pid="'+pid+'" aria-label="จำนวนคน"><i>คน</i></div><div class="op" aria-hidden="true">×</div>'+
   '<div class="t"><span>ค่าแรงต่อคนต่อรอบ</span><input type="number" inputmode="decimal" min="0" id="lar" data-k="labr" data-pid="'+pid+'" aria-label="ค่าแรงต่อคน"><i>บาท</i></div><div class="op" aria-hidden="true">=</div>'+
-  '<div class="t hi"><span>ค่าแรงทั้งรอบ</span><b data-o="labTotal"></b><i>บาท</i></div></div>'+
-  '<div class="kv"><div><span>ถ้าไม่นับค่าแรง ต้นทุนต่อ'+d.unit+'จะต่ำเกินจริง</span><b><span data-o="labUnit"></span> บาท</b></div></div></section>';
-}
+  '<div class="t hi"><span>ค่าแรงทั้งรอบ</span><b data-o="labTotal" data-pid="'+pid+'"></b><i>บาท</i></div></div>'+
+  '<div class="kv"><div><span>ถ้าไม่นับค่าแรง ต้นทุนต่อ'+d.unit+'จะต่ำเกินจริง</span><b><span data-o="labUnit" data-pid="'+pid+'"></span> บาท</b></div></div></section>';}
+function partPL(pid){var d=DEF[pid];
+  return'<section class="part"><h2>กำไรหรือขาดทุนของรอบนี้ '+pn(pid)+'</h2>'+
+  '<div class="eq"><div class="t"><span>ขายได้จริง</span><input type="number" inputmode="numeric" min="0" id="sold-'+pid+'" data-k="sold" data-pid="'+pid+'" aria-label="จำนวนที่ขายได้"><i>'+d.unit+'</i></div><div class="op" aria-hidden="true">×</div>'+
+  '<div class="t"><span>เงินที่ได้ต่อ'+d.unit+' (หลังหักค่าธรรมเนียม)</span><b data-o="recv" data-pid="'+pid+'"></b><i>บาท</i></div><div class="op" aria-hidden="true">=</div>'+
+  '<div class="t"><span>เงินที่ได้ทั้งหมด</span><b data-o="recvT" data-pid="'+pid+'"></b><i>บาท</i></div></div>'+
+  '<div class="eq"><div class="t"><span>เงินที่ได้ทั้งหมด</span><b data-o="recvT" data-pid="'+pid+'"></b><i>บาท</i></div><div class="op" aria-hidden="true">−</div>'+
+  '<div class="t"><span>ต้นทุนรวมทั้งรอบ</span><b data-o="total" data-pid="'+pid+'"></b><i>บาท</i></div><div class="op" aria-hidden="true">=</div>'+
+  '<div class="t hi"><span data-o="plWord" data-pid="'+pid+'"></span><b data-o="plT" data-pid="'+pid+'"></b><i>บาท</i></div></div>'+
+  '<div><span class="chip" data-chip="pl" data-pid="'+pid+'"></span></div><p class="small muted">ทำไว้ '+d.made+' '+d.unit+' ถ้าขายไม่หมด ต้นทุนของที่เหลือก็ยังจ่ายไปแล้ว</p></section>';}
 function tabsHtml(pid){return'<div class="tabs" role="tablist" aria-label="เลือกผลิตภัณฑ์">'+PIDS.map(function(k){var d=DEF[k];return'<button type="button" role="tab" class="'+d.cls+'" data-act="tab" data-pid="'+k+'" aria-selected="'+(k===pid)+'"><span class="badge" aria-hidden="true">'+d.badge+'</span>'+d.short+'</button>'}).join('')+'</div>'}
-function defUnit(pid){var t=0;DEF[pid].items.forEach(function(i){t+=i[1]});return t/DEF[pid].made}
 function renderCalc(el){
   var pid=el.dataset.pid,parts=el.dataset.parts.split(','),h='';
   if(el.dataset.tabs)h+=tabsHtml(pid);
-  parts.forEach(function(p){h+=({cost:partCost,made:partMade,price:partPrice,fee:partFee,am:partAm,lab:partLab}[p])(pid)});
-  h+='<div><button class="btn sec" type="button" data-act="reset" data-pid="'+pid+'">เริ่มใหม่ด้วยตัวเลขตัวอย่าง</button></div>';
+  if(el.dataset.sub){var SUBS=[['cost','1 ต้นทุน'],['price','2 ตั้งราคา'],['fee','3 ค่าธรรมเนียม'],['pl','4 กำไรขาดทุน']];
+    if(parts.indexOf(S.sub)<0)S.sub=parts[0];
+    h+='<div class="tabs" role="tablist" aria-label="เลือกขั้นตอน">'+SUBS.map(function(x){return'<button type="button" role="tab" data-act="sub" data-v="'+x[0]+'" aria-selected="'+(x[0]===S.sub)+'">'+x[1]+'</button>'}).join('')+'</div>'+
+    '<div class="kv"><div><span>ต้นทุนต่อ'+DEF[pid].unit+'</span><b><span data-o="unit" data-pid="'+pid+'"></span> บาท</b></div><div><span>ราคาขาย</span><b><span data-o="sell" data-pid="'+pid+'"></span> บาท</b></div></div>';
+    parts=[S.sub]}
+  parts.forEach(function(p){h+=({cost:partCost,made:partMade,price:partPrice,fee:partFee,am:partAm,lab:partLab,pl:partPL}[p])(pid)});
+  h+='<div><button class="btn sec" type="button" data-act="reset" data-pid="'+pid+'">เริ่มใหม่ด้วยค่าจากสูตร</button></div>';
   el.innerHTML=h;
 }
-function calcBox(pid,parts,tabs){return'<div class="calc '+DEF[pid].cls+'" data-pid="'+pid+'" data-parts="'+parts+'"'+(tabs?' data-tabs="1"':'')+'></div>'}
+function calcBox(pid,parts,tabs,sub){return'<div class="calc '+DEF[pid].cls+'" data-pid="'+pid+'" data-parts="'+parts+'"'+(tabs?' data-tabs="1"':'')+(sub?' data-sub="1"':'')+'></div>'}
 
 /* ---------- outputs ---------- */
-function O(k,pid){
-  var c=pid&&S.p[pid]?compute(pid):null,d=pid?DEF[pid]:null;
+function O(k,pid,el){
+  var c=pid&&S.p[pid]?compute(pid):null;
   switch(k){
+    case'amt':return fmt(amt(S.p[pid].items[+el.dataset.i]||{}));
     case'total':return fmt(c.total);case'made':return fmt(c.made,0);case'unit':return fmt(c.unit);case'plan':return fmt(c.plan);
     case'lo':return fmt(c.lo);case'hi':return fmt(c.hi);case'sug':return fmt(c.sug);case'profit':return fmt(c.profit,0);case'fee':return fmt(c.fee,0);
-    case'sell':return fmt(c.sell);case'mode':return c.manual?'(ตั้งเอง)':'(คำนวณให้)';
-    case'profitUnit':return fmt(c.sell-c.unit);case'gpct':return fmt(c.gpct,0);
+    case'mode':return c.manual?'(ตั้งเอง)':'(คำนวณให้)';
+    case'profitUnit':return fmt(c.sell-c.unit);case'gpct':return fmt(c.gpct,0);case'sell':return fmt(c.sell);
     case'feeAmt':return fmt(c.sell*c.fee/100);case'recv':return fmt(c.recv);case'real':return fmt(c.real);case'realPct':return fmt(c.realPct,0);case'need':return fmt(c.need);
-    case'madeMsg':var df=c.unit-c.plan;return Math.abs(df)<.005?'ตรงตามแผน':(df>0?'แพงขึ้นกระปุกละ '+fmt(df)+' บาท เมื่อเทียบกับแผน':'ถูกลงกระปุกละ '+fmt(-df)+' บาท เมื่อเทียบกับแผน');
+    case'madeMsg':var df=c.unit-c.plan;return Math.abs(df)<.005?'ตรงตามแผน':(df>0?'แพงขึ้น'+DEF[pid].unit+'ละ '+fmt(df)+' บาท เมื่อเทียบกับแผน':'ถูกลง'+DEF[pid].unit+'ละ '+fmt(-df)+' บาท เมื่อเทียบกับแผน');
+    case'soldN':return fmt(c.sold,0);case'revT':return fmt(c.revT);case'recvT':return fmt(c.recvT);case'plT':return fmt(Math.abs(c.plT));case'plWord':return c.plT>=0?'กำไร':'ขาดทุน';
     case'amRound':return fmt(S.am[pid].p/Math.max(1,S.am[pid].r));
     case'amUnit':return fmt(S.am[pid].p/Math.max(1,S.am[pid].r)/DEF[pid].made);
     case'labTotal':return fmt(S.lab[pid].n*S.lab[pid].r);
     case'labUnit':return fmt(S.lab[pid].n*S.lab[pid].r/DEF[pid].made);
-    case'chk':return String(S.check.filter(Boolean).length);
-    case'quizScore':var ok=0,all=0;QUIZ_ALL.forEach(function(q){all++;if(S.quiz[q.id]===q.a)ok++});return ok+' / '+all;
-    case'compare':return '';
+    case'quizScore':var ok=0,all=0;ALLQ.forEach(function(q){all++;if(q.wk?(S.wk[q.id]&&S.wk[q.id].ok):S.quiz[q.id]===q.a)ok++});return ok+' / '+all;
   }
   return'';
 }
 function chipFor(kind,pid){
   var c=compute(pid);
+  if(!(c.unit>0))return['info','ใส่จำนวนที่ขายได้จริงก่อน'];
+  if(kind==='pl'){if(c.plT<0)return['bad','✕ ขาดทุน '+fmt(-c.plT)+' บาท ต้องขึ้นราคา หรือลดต้นทุน'];if(c.plT===0)return['warn','! เท่าทุน ไม่มีกำไร'];return['ok','✓ กำไร '+fmt(c.plT)+' บาท']}
   if(kind==='price'){
-    if(!(c.unit>0))return['info','ใส่จำนวนที่ขายได้จริงก่อน'];
     if(c.sell<c.unit)return['bad','✕ ต่ำกว่าต้นทุน ขายแล้วขาดทุน'];
     if(c.gpct<29.5)return['warn','! กำไรต่ำกว่า 30% ของต้นทุน'];
     if(c.gpct<=40.5)return['ok','✓ กำไรอยู่ในช่วง 30–40% ที่แนะนำ'];
     return['info','กำไรสูงกว่า 40% ลองถามว่าลูกค้ายอมจ่ายหรือไม่'];
   }
-  if(!(c.unit>0))return['info','ใส่จำนวนที่ขายได้จริงก่อน'];
   if(c.real<0)return['bad','✕ หลังหักค่าธรรมเนียม ขาดทุน'];
   if(c.realPct<29.5)return['warn','! กำไรจริงต่ำกว่า 30% ของต้นทุน ควรปรับราคาช่องทางนี้'];
   return['ok','✓ กำไรจริงยังได้ตามเป้า'];
 }
+function exStatus(pid,i){
+  var raw=i==='sum'?S.exs[pid]:S.ex[pid][i];var v=pv(raw);
+  if(v===null)return['',''];
+  var exp=i==='sum'?defSum(pid,true):defAmt(DEF[pid].items[+i]);
+  return Math.abs(v-exp)<0.011?['ok','✓ ถูก']:['bad','✕ ลองใหม่'];
+}
 function refresh(){
-  var root=document.getElementById('stage');
-  root.querySelectorAll('[data-o]').forEach(function(el){var pid=el.dataset.pid||(el.closest('[data-pid]')&&el.closest('[data-pid]').dataset.pid);el.textContent=O(el.dataset.o,pid)});
+  var root=stage;
+  root.querySelectorAll('[data-o]').forEach(function(el){var pid=el.dataset.pid||(el.closest('[data-pid]')&&el.closest('[data-pid]').dataset.pid);el.textContent=O(el.dataset.o,pid,el)});
   root.querySelectorAll('[data-chip]').forEach(function(el){var r=chipFor(el.dataset.chip,el.dataset.pid);el.className='chip '+r[0];el.textContent=r[1]});
   root.querySelectorAll('[data-k]').forEach(syncInput);
+  root.querySelectorAll('[data-exs]').forEach(function(el){var r=exStatus(el.dataset.pid,el.dataset.exs);el.className='st '+r[0];el.textContent=r[1]});
   root.querySelectorAll('.seg [data-act="step"]').forEach(function(b){b.setAttribute('aria-pressed',String(S.p[b.dataset.pid].step===+b.dataset.v))});
-  var cm=root.querySelector('[data-compare]');if(cm)fillCompare(cm);
   var cs=root.querySelector('[data-checkmsg]');if(cs){var n=S.check.filter(Boolean).length;cs.textContent=n===0?'ติ๊กรายการที่ท่านใช้จริงในการทำสินค้า 1 รอบ':n<10?'ลองดูรายการที่ยังไม่ได้ติ๊ก อาจเป็นต้นทุนที่ลืมนับ':'ครบทุกรายการแล้ว'}
 }
 var BIND={
-  item:{g:function(p,i){return S.p[p].items[i]&&S.p[p].items[i].v},s:function(p,i,v){S.p[p].items[i].v=num(v)}},
   iname:{g:function(p,i){return S.p[p].items[i]&&S.p[p].items[i].n},s:function(p,i,v){S.p[p].items[i].n=v}},
+  iq:{g:function(p,i){return S.p[p].items[i]&&S.p[p].items[i].q},s:function(p,i,v){S.p[p].items[i].q=num(v)}},
+  ip:{g:function(p,i){return S.p[p].items[i]&&S.p[p].items[i].p},s:function(p,i,v){S.p[p].items[i].p=num(v)}},
   made:{g:function(p){return S.p[p].made},s:function(p,i,v){S.p[p].made=num(v)}},
   profit:{g:function(p){return S.p[p].profit},s:function(p,i,v){S.p[p].profit=num(v)}},
   fee:{g:function(p){return S.p[p].fee},s:function(p,i,v){S.p[p].fee=num(v)}},
@@ -376,7 +452,10 @@ var BIND={
   amp:{g:function(p){return S.am[p].p},s:function(p,i,v){S.am[p].p=num(v)}},
   amr:{g:function(p){return S.am[p].r},s:function(p,i,v){S.am[p].r=num(v)}},
   labn:{g:function(p){return S.lab[p].n},s:function(p,i,v){S.lab[p].n=num(v)}},
-  labr:{g:function(p){return S.lab[p].r},s:function(p,i,v){S.lab[p].r=num(v)}}
+  labr:{g:function(p){return S.lab[p].r},s:function(p,i,v){S.lab[p].r=num(v)}},
+  ex:{g:function(p,i){var v=S.ex[p][i];return v===undefined?'':v},s:function(p,i,v){S.ex[p][i]=v}},
+  sold:{g:function(p){return compute(p).sold},s:function(p,i,v){S.p[p].sold=v===''?null:num(v)}},
+  exsum:{g:function(p){return S.exs[p]},s:function(p,i,v){S.exs[p]=v}}
 };
 function syncInput(el){
   if(document.activeElement===el)return;
@@ -385,20 +464,31 @@ function syncInput(el){
   if(v!==undefined&&String(el.value)!==String(v))el.value=v;
 }
 
-/* ---------- quiz ---------- */
-var QUIZ_ALL=[];
-function Q(id,q,opts,a,exp){var o={id:id,q:q,o:opts,a:a,e:exp};QUIZ_ALL.push(o);return o}
+/* ---------- quiz (choice) ---------- */
+var ALLQ=[];
+function Q(id,q,opts,a,exp){var o={id:id,q:q,o:opts,a:a,e:exp};ALLQ.push(o);return o}
+function W(id,q,op,x,y,r,note){var o={id:id,q:q,op:op,x:x,y:y,r:r,note:note,wk:1};ALLQ.push(o);return o}
 var qz={
- q1:[Q('q1','ทำน้ำพริก 2 รอบ ต้นทุนรวมเท่ากันรอบละ 1,600 บาท รอบแรกได้ 50 กระปุก รอบสองได้ 40 กระปุก ต้นทุนต่อกระปุกรอบไหนสูงกว่า',['รอบแรก','รอบสอง','เท่ากัน'],1,'รอบแรก 1,600 ÷ 50 = 32 บาท รอบสอง 1,600 ÷ 40 = 40 บาท ยิ่งได้จำนวนน้อย ต้นทุนต่อกระปุกยิ่งสูง')],
- q2:[Q('q2a','ค่าแก๊สที่ใช้ผัดน้ำพริก นับเป็นต้นทุนหรือไม่',['นับ อยู่ในกลุ่มค่าใช้จ่ายอื่น','ไม่นับ เพราะเป็นของใช้ในครัว','นับเฉพาะตอนแก๊สหมดถัง'],0,'ทุกอย่างที่ใช้ทำให้สินค้าเกิดขึ้นเป็นต้นทุน แม้จะเป็นก๊าซ ไฟ หรือน้ำ'),
-         Q('q2b','ค่าแรงของสมาชิกกลุ่มที่ลงมือทำเอง ควรนับเป็นต้นทุนหรือไม่',['นับ','ไม่นับ เพราะทำกันเอง'],0,'แรงงานคือต้นทุนจริง ถ้าไม่นับ ราคาจะต่ำเกินไป และวันที่ต้องจ้างคนช่วยจะขาดทุน')],
- q3:[Q('q3a','ต้นทุนรวม 1,200 บาท ทำได้ 40 กระปุก ต้นทุนต่อกระปุกเท่าไร',['25 บาท','30 บาท','35 บาท'],1,'1,200 ÷ 40 = 30 บาท'),
-         Q('q3b','ต้นทุนรวม 1,600 บาท ทำ 50 กระปุก แต่ขายได้จริง 40 กระปุก ต้นทุนต่อกระปุกที่ขายได้เท่าไร',['32 บาท','40 บาท','50 บาท'],1,'หารด้วยจำนวนที่ขายได้จริง 1,600 ÷ 40 = 40 บาท')],
- q4:[Q('q4a','เครื่องซีล 1,200 บาท คาดว่าใช้ได้ 60 รอบ คิดเป็นค่าสึกหรอรอบละเท่าไร',['10 บาท','20 บาท','60 บาท'],1,'1,200 ÷ 60 = 20 บาทต่อรอบ'),
-         Q('q4b','ซื้อกระปุกพร้อมฝาและซีล 50 ชุด ราคารวม 250 บาท ตกชุดละเท่าไร',['5 บาท','25 บาท','50 บาท'],0,'250 ÷ 50 = 5 บาทต่อชุด')],
- q5:[Q('q5a','ขายราคา 45 บาท ช่องทางหักค่าธรรมเนียม 10% ของราคาขาย เงินที่ได้รับจริงเท่าไร',['35 บาท','40.5 บาท','44.5 บาท'],1,'45 × 10% = 4.5 บาท เหลือ 45 − 4.5 = 40.5 บาท'),
-         Q('q5b','ต้นทุน 32 บาท ได้รับจริง 40.5 บาท กำไรจริงต่อกระปุกเท่าไร',['13 บาท','8.5 บาท','4.5 บาท'],1,'40.5 − 32 = 8.5 บาท น้อยกว่าที่คิดไว้ตอนแรก จึงต้องคิดค่าธรรมเนียมก่อนตั้งราคา')]
+ q1:[Q('q1','ทำน้ำพริกสด 2 รอบ ต้นทุนวัตถุดิบรวมเท่ากันรอบละ 250 บาท รอบแรกได้ 14 กระปุก รอบสองได้ 10 กระปุก ต้นทุนต่อกระปุกรอบไหนสูงกว่า',['รอบแรก','รอบสอง','เท่ากัน'],1,'รอบแรก 250 ÷ 14 = 17.86 บาท รอบสอง 250 ÷ 10 = 25 บาท ยิ่งได้จำนวนน้อย ต้นทุนต่อกระปุกยิ่งสูง')],
+ q2:[Q('q2a','ค่าถ่านที่ใช้นึ่งข้าวเกรียบ เป็นต้นทุนของสินค้าหรือไม่',['เป็นต้นทุน','ไม่เป็นต้นทุน'],0,'ถ่านใช้ทำให้สินค้าเกิดขึ้น เป็นต้นทุน (ค่าใช้จ่ายในการผลิตอื่นๆ)'),
+     Q('q2b','ค่าแรงของสมาชิกกลุ่มที่ลงมือทำเอง เป็นต้นทุนของสินค้าหรือไม่',['เป็นต้นทุน','ไม่เป็นต้นทุน'],0,'แรงงานคือต้นทุนจริง ถ้าไม่นับ ราคาจะต่ำเกินไป และวันที่ต้องจ้างคนช่วยจะขาดทุน'),
+     Q('q2c','กำไรที่เราอยากได้ 35% เป็นต้นทุนของสินค้าหรือไม่',['เป็นต้นทุน','ไม่เป็นต้นทุน'],1,'กำไรไม่ใช่ต้นทุน เป็นส่วนที่บวกเพิ่มทีหลัง หลังจากรู้ต้นทุนแล้ว'),
+     Q('q2d','ค่าถ่ายภาพสินค้าลงเพจขาย เป็นต้นทุนของสินค้าหรือไม่',['เป็นต้นทุน','ไม่เป็นต้นทุน'],0,'เป็นค่าการตลาด เป็นต้นทุนของการขาย (ค่าใช้จ่ายอื่น)'),
+     Q('q2e','ค่าธรรมเนียมแพลตฟอร์มออนไลน์ที่หักจากราคาขาย เป็นต้นทุนของสินค้าหรือไม่',['เป็นต้นทุน','ไม่เป็นต้นทุน'],0,'เป็นต้นทุนของช่องทางขาย ต้องคิดล่วงหน้า (ค่าใช้จ่ายอื่น)'),
+     Q('q2f','เงินที่ลูกค้าจ่ายซื้อสินค้า เป็นต้นทุนของสินค้าหรือไม่',['เป็นต้นทุน','ไม่เป็นต้นทุน'],1,'เป็นรายได้ ไม่ใช่ต้นทุน'),
+     Q('q2g','น้ำพริกที่เสียต้องทิ้งตอนผลิต เป็นต้นทุนของสินค้าหรือไม่',['เป็นต้นทุน','ไม่เป็นต้นทุน'],0,'ของเสียที่เกิดตอนผลิต เป็นต้นทุนที่ต้องนับรวม ไม่เช่นนั้นต้นทุนต่อกระปุกจะต่ำกว่าจริง'),
+     Q('q2h','ค่าไฟของบ้านที่ใช้ดูทีวีและเปิดพัดลมส่วนตัว เป็นต้นทุนของสินค้าหรือไม่',['เป็นต้นทุน','ไม่เป็นต้นทุน'],1,'ไม่เกี่ยวกับการทำสินค้า เป็นค่าใช้จ่ายส่วนตัว ไม่นับเป็นต้นทุน ยกเว้นส่วนที่ใช้กับเตาอบหรือตู้เย็นของสินค้า')]
 };
+var wk3=[W('q3a','ข้าวเกรียบ ต้นทุนรวม 115 บาท ทำได้ 15 ถุง ต้นทุนต่อถุงเท่าไร (ปัดเป็นทศนิยม 2 ตำแหน่ง)','÷',115,15,7.67,'115 ÷ 15 = 7.67 บาทต่อถุง'),
+ W('q3b','น้ำพริกสด ต้นทุนวัตถุดิบรวม 250 บาท ได้ 14 กระปุก ต้นทุนต่อกระปุกเท่าไร','÷',250,14,17.86,'250 ÷ 14 = 17.86 บาทต่อกระปุก'),
+ W('q3c','ข้าวเกรียบ ต้นทุนรวม 115 บาท ทำ 15 ถุง แต่เสียไป 3 ถุง ขายได้จริง 12 ถุง ต้นทุนต่อถุงที่ขายได้เท่าไร','÷',115,12,9.58,'115 ÷ 12 = 9.58 บาทต่อถุง หารด้วยจำนวนที่ขายได้จริง')];
+var wk4=[W('q4a','ถุงแกงกันร้อน 1 ชุด 15 ใบ ราคา 5 บาท ตกใบละเท่าไร','÷',5,15,0.33,'5 ÷ 15 = 0.33 บาทต่อใบ'),
+ W('q4b','แป้งมันสำปะหลัง 0.25 กก. ราคากิโลกรัมละ 40 บาท เป็นเงินเท่าไร','×',0.25,40,10,'0.25 × 40 = 10 บาท'),
+ W('q4c','ค่าแรง 2 คน คนละ 100 บาท รวมเท่าไร','×',2,100,200,'2 × 100 = 200 บาท'),
+ W('q4d','กะทะราคา 600 บาท ใช้ได้ 60 รอบ ตกรอบละเท่าไร','÷',600,60,10,'600 ÷ 60 = 10 บาทต่อรอบ')];
+var wk5=[W('q5a','ขายน้ำพริกสดกระปุกละ 20 บาท ช่องทางขายหักค่าธรรมเนียม 10% ของราคาขาย (10% = 0.10) ค่าธรรมเนียมกี่บาท','×',20,0.1,2,'20 × 0.10 = 2 บาท'),
+ W('q5b','จากข้อก่อน ขายราคา 20 บาท หักค่าธรรมเนียม 2 บาท เงินที่ได้รับจริงเท่าไร','−',20,2,18,'20 − 2 = 18 บาท'),
+ W('q5c','น้ำพริกสด ต้นทุนต่อกระปุก 17.86 บาท ได้รับจริง 18 บาท กำไรจริงต่อกระปุกเท่าไร','−',18,17.86,0.14,'18 − 17.86 = 0.14 บาท กำไรแทบไม่เหลือ ต้องคิดค่าธรรมเนียมก่อนตั้งราคา')];
 function quizHtml(list){
   return list.map(function(q){
     var sel=S.quiz[q.id],done=sel!==undefined;
@@ -409,14 +499,95 @@ function quizHtml(list){
       (done?'<div class="exp"><b>'+(sel===q.a?'ถูกต้อง ':'ยังไม่ใช่ ')+'</b>'+q.e+'</div>':'')+'</div>';
   }).join('');
 }
+/* ---------- worked-calculation questions ---------- */
+function wkHtml(list){
+  return list.map(function(w){
+    var inp=function(f,lab){return'<input type="text" inputmode="decimal" autocomplete="off" id="'+w.id+f+'" data-k="wk" data-q="'+w.id+'" data-f="'+f+'" aria-label="'+lab+'">'};
+    return'<div class="q"><div class="qt">'+w.q+'</div><div class="wk"><span class="lbl">เขียนวิธีคิดด้วยตัวเลข</span>'+inp('x','ตัวเลขตัวแรก')+'<b>'+w.op+'</b>'+inp('y','ตัวเลขตัวที่สอง')+'<b>=</b>'+inp('r','คำตอบ')+'</div>'+
+      '<div><button class="btn" type="button" data-act="wkcheck" data-q="'+w.id+'">ตรวจคำตอบ</button> <button class="btn sec" type="button" data-act="wkshow" data-q="'+w.id+'">ดูเฉลย</button></div>'+
+      '<div class="exp" data-wkres="'+w.id+'" hidden></div></div>';
+  }).join('');
+}
+function wkFind(id){for(var i=0;i<ALLQ.length;i++)if(ALLQ[i].id===id)return ALLQ[i]}
+function near(a,b){return a!==null&&Math.abs(a-b)<1e-9}
+function wkEval(id){
+  var w=wkFind(id),s=S.wk[id]||{},x=pv(s.x),y=pv(s.y),r=pv(s.r),okx,oky;
+  if(w.op==='×'){var d=near(x,w.x)&&near(y,w.y),sw=near(x,w.y)&&near(y,w.x);okx=oky=(d||sw)}
+  else{okx=near(x,w.x);oky=near(y,w.y)}
+  var okr=r!==null&&Math.abs(r-w.r)<0.0051;
+  return{x:okx,y:oky,r:okr,ok:okx&&oky&&okr};
+}
+function wkPaint(id,mode){
+  var box=stage.querySelector('[data-wkres="'+id+'"]');if(!box)return;
+  var s=S.wk[id]||{},w=wkFind(id);
+  ['x','y','r'].forEach(function(f){var el=document.getElementById(id+f);if(!el)return;if(String(el.value)!==String(s[f]===undefined?'':s[f])&&document.activeElement!==el)el.value=s[f]===undefined?'':s[f];el.classList.remove('ok','bad')});
+  if(mode==='show'){box.hidden=false;box.innerHTML='<b>เฉลย</b> '+w.note;return}
+  if(!s.checked){box.hidden=true;return}
+  var e=wkEval(id);s.ok=e.ok;
+  ['x','y','r'].forEach(function(f){var el=document.getElementById(id+f);if(el)el.classList.add(e[f]?'ok':'bad')});
+  box.hidden=false;
+  if(e.ok)box.innerHTML='<b>ถูกต้อง</b> '+w.note;
+  else{var bad=[];if(!e.x)bad.push('ตัวเลขตัวแรก');if(!e.y)bad.push('ตัวเลขตัวที่สอง');if(!e.r)bad.push('คำตอบ');box.innerHTML='<b>ยังไม่ตรง</b> ตรวจ'+bad.join(' และ ')+'อีกครั้ง หรือกดดูเฉลย'}
+}
 
-/* ---------- slides ---------- */
+/* ---------- games ---------- */
+var SORT_ITEMS=[
+ ['ดักแด้ไหมอีรี่','mat','เป็นวัตถุดิบหลักของสินค้า'],['พริกแห้ง','mat','วัตถุดิบที่ใส่ในสินค้า'],['หอมแดง','mat','วัตถุดิบที่ใส่ในสินค้า'],['น้ำมันพืช','mat','น้ำมันที่ใช้ทอดหรือผัดเป็นวัตถุดิบ'],['มะขามเปียก','mat','เครื่องปรุงที่ใส่ในสินค้า นับเป็นวัตถุดิบ'],['ปลาร้า','mat','เครื่องปรุงที่ใส่ในสินค้า นับเป็นวัตถุดิบ'],
+ ['ค่าแรงล้างและเตรียมวัตถุดิบ','lab','เป็นค่าแรงคน'],['ค่าแรงบรรจุสินค้า','lab','เป็นค่าแรงคน'],['แรงของแม่บ้านที่ลงมือทำเอง','lab','เป็นแรงงาน แม้ทำกันเองก็ต้องนับ'],
+ ['ถุงแกงกันร้อน','pack','เป็นภาชนะที่ใช้บรรจุ'],['กระปุกและฝา','pack','เป็นภาชนะที่ใช้บรรจุ'],['ฟอยล์ซีลปากกระปุก','pack','เป็นวัสดุปิดบรรจุภัณฑ์'],['ฉลากสินค้า','pack','อยู่บนบรรจุภัณฑ์'],
+ ['ถ่านที่ใช้นึ่ง','prod','เป็นพลังงานที่ใช้ในการผลิต'],['ค่าแก๊ส','prod','เป็นพลังงานที่ใช้ในการผลิต'],['ค่าไฟเตาอบ','prod','เป็นพลังงานที่ใช้ในการผลิต'],['ค่าน้ำล้างวัตถุดิบ','prod','เป็นสาธารณูปโภคที่ใช้ในการผลิต'],['สินค้าเสียที่ต้องทิ้ง','prod','เป็นความสูญเสียที่เกิดขึ้นในการผลิต'],
+ ['ค่าส่งพัสดุ','oth','เกิดหลังผลิตเสร็จ เป็นค่าขนส่ง'],['ค่าถ่ายภาพลงเพจขาย','oth','เป็นค่าการตลาด ไม่ได้อยู่ในขั้นการผลิต'],['ค่าธรรมเนียมแพลตฟอร์มออนไลน์','oth','เป็นค่าธรรมเนียมช่องทางขาย'],['ค่าโฆษณาออนไลน์','oth','เป็นค่าการตลาด']
+];
+var SORT_BTNS=[['mat','ค่าวัตถุดิบ','ของที่ใส่ในสินค้า'],['lab','ค่าแรงงาน','ค่าแรงคน'],['pack','ค่าบรรจุภัณฑ์','ภาชนะ ฉลาก'],['prod','ค่าใช้จ่ายในการผลิตอื่นๆ','ถ่าน แก๊ส ไฟ น้ำ ของเสีย'],['oth','ค่าใช้จ่ายอื่น','ขนส่ง การตลาด ค่าธรรมเนียม']];
+var sortG=null;
+function sortStart(){sortG={ord:shuffle(SORT_ITEMS.map(function(_,i){return i})),i:0,score:0,miss:[],ans:null}}
+function sortHtml(){
+  if(!sortG)return'<div class="card"><div class="big">เกมจัดกลุ่มต้นทุน</div><p>การ์ด '+SORT_ITEMS.length+' ใบ แตะเลือกว่าแต่ละรายการอยู่กลุ่มไหนใน 5 กลุ่ม ตอบผิดไม่เป็นไร จะบอกเหตุผลทุกใบ</p><div><button class="btn" type="button" data-act="sortstart">เริ่มเล่น</button></div></div>';
+  var n=SORT_ITEMS.length;
+  if(sortG.i>=n){
+    var h='<div class="card"><div class="big">ได้ '+sortG.score+' จาก '+n+'</div><p>'+(sortG.score===n?'ถูกครบทุกใบ':sortG.score>=n-4?'เกือบครบแล้ว':'ลองทบทวนใบที่พลาดด้านล่าง')+'</p>';
+    if(sortG.miss.length)h+='<div class="exp"><b>ใบที่พลาด</b><br>'+sortG.miss.map(function(m){return esc(SORT_ITEMS[m][0])+' อยู่กลุ่ม '+GROUP[SORT_ITEMS[m][1]]}).join('<br>')+'</div>';
+    return h+'<div><button class="btn" type="button" data-act="sortstart">เล่นอีกครั้ง</button></div></div>';
+  }
+  var it=SORT_ITEMS[sortG.ord[sortG.i]];
+  var h2='<div class="gprog"><span>ใบที่ '+(sortG.i+1)+' จาก '+n+'</span><span>ถูก '+sortG.score+'</span></div><div class="gcard">'+esc(it[0])+'</div>';
+  if(sortG.ans===null){
+    h2+='<div class="gbtns">'+SORT_BTNS.map(function(b){return'<button type="button" class="gbtn g-'+b[0]+'" data-act="sortpick" data-g="'+b[0]+'">'+b[1]+'<small>'+b[2]+'</small></button>'}).join('')+'</div>';
+  }else{
+    var ok=sortG.ans===it[1];
+    h2+='<div class="exp"><b>'+(ok?'ถูกต้อง ':'ยังไม่ใช่ ')+'</b>'+esc(it[0])+' อยู่กลุ่ม '+GROUP[it[1]]+' เพราะ '+it[2]+'</div><div><button class="btn" type="button" data-act="sortnext">'+(sortG.i+1>=n?'ดูผล':'ใบถัดไป')+'</button></div>';
+  }
+  return h2;
+}
+var STEPS4=[['หาต้นทุนการผลิตทั้งหมด','รวมค่าใช้จ่ายทุกรายการในหนึ่งรอบ'],['หาต้นทุนต่อหน่วย','ต้นทุนทั้งหมด ÷ จำนวนที่ได้จริง'],['บวกกำไรที่ต้องการ','ต้นทุนต่อหน่วย + กำไร'],['กำหนดราคาขาย','ปรับให้เหมาะกับตลาดและกำลังซื้อ']];
+var ordG=null;
+function ordStart(){ordG={ord:shuffle([0,1,2,3]),picked:[],msg:''}}
+function ordHtml(){
+  if(!ordG)ordStart();
+  var h='<p class="lead">แตะการ์ดตามลำดับ ตั้งแต่ขั้นแรกถึงขั้นสุดท้าย</p><div class="slots">';
+  for(var i=0;i<4;i++){var p=ordG.picked[i];h+='<div class="slot'+(p!==undefined?' on':'')+'"><i>'+(i+1)+'</i><span>'+(p!==undefined?'<b>'+STEPS4[p][0]+'</b> <span class="muted">'+STEPS4[p][1]+'</span>':'<span class="muted">ว่าง</span>')+'</span></div>'}
+  h+='</div>';
+  if(ordG.picked.length<4){h+='<div class="opts">'+ordG.ord.filter(function(k){return ordG.picked.indexOf(k)<0}).map(function(k){return'<button type="button" class="opt" data-act="ordpick" data-i="'+k+'"><span>'+STEPS4[k][0]+'</span></button>'}).join('')+'</div>'}
+  if(ordG.msg)h+='<div class="exp">'+ordG.msg+'</div>';
+  if(ordG.picked.length===4)h+='<div><button class="btn" type="button" data-act="ordstart">เล่นอีกครั้ง</button></div>';
+  return h;
+}
+
+/* ---------- static builders ---------- */
 function cards(a){return'<div class="cards">'+a.map(function(c){return'<div class="card"><div class="big">'+c[0]+'</div><p>'+c[1]+'</p></div>'}).join('')+'</div>'}
 function steps(a){return'<ol class="steps">'+a.map(function(c){return'<li><div><b>'+c[0]+'</b><p>'+c[1]+'</p></div></li>'}).join('')+'</ol>'}
 function staticTable(pid){
   var d=DEF[pid],t=0;
-  var rows=d.items.map(function(i){t+=i[1];return'<tr><td>'+i[0]+' <span class="tag">'+GROUP[i[2]]+'</span></td><td class="n">'+fmt(i[1],0)+'</td></tr>'}).join('');
-  return'<div class="tblwrap"><table><thead><tr><th>รายการ</th><th class="n">บาท</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td>ต้นทุนรวมหนึ่งรอบ (ทำได้ '+d.made+' '+d.unit+')</td><td class="n">'+fmt(t,0)+'</td></tr></tfoot></table></div>';
+  var rows=d.items.map(function(i){var a=defAmt(i);if(!i[5])t+=a;return'<tr><td>'+i[0]+' <span class="tag">'+GROUP[i[4]]+'</span>'+(i[5]?' <span class="tag fill">ใส่เอง</span>':'')+'</td><td class="n">'+fmt(i[1])+' '+i[2]+'</td><td class="n">'+fmt(i[3])+'</td><td class="n">'+(i[5]?'–':fmt(a))+'</td></tr>'}).join('');
+  return'<p class="muted">'+d.batch+'</p><div class="tblwrap"><table><thead><tr><th>รายการ</th><th class="n">ใช้ปริมาณ</th><th class="n">ราคาต่อหน่วย</th><th class="n">รวมเงิน (บาท)</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td colspan="3">รวมต้นทุนที่ระบุในสูตร</td><td class="n">'+fmt(t)+'</td></tr></tfoot></table></div><p class="small muted">แถวที่มีป้าย ใส่เอง ยังไม่มีราคาในสูตร ให้ใส่ราคาที่ซื้อจริง</p>';
+}
+function exHtml(pid){
+  var d=DEF[pid],h='<section class="part"><h2>'+pn(pid)+' คิดเป็นเงินแต่ละแถว</h2><p class="muted">เงิน = ปริมาณที่ใช้ × ราคาต่อหน่วย พิมพ์ผลลัพธ์ในช่อง</p><div>';
+  d.items.forEach(function(it,i){if(it[5])return;
+    h+='<div class="itm"><div class="nm"><span class="t">'+it[0]+'</span></div><div class="qp"><b>'+fmt(it[1])+'</b><span class="u">'+it[2]+'</span><span class="x">×</span><b>'+fmt(it[3])+'</b><span class="u">บาท/'+it[2]+'</span><span class="x">=</span>'+
+      '<input type="text" inputmode="decimal" autocomplete="off" id="ex-'+pid+i+'" data-k="ex" data-pid="'+pid+'" data-i="'+i+'" aria-label="เงินของ '+esc(it[0])+'"><span data-exs="'+i+'" data-pid="'+pid+'"></span></div></div>'});
+  h+='</div><div class="itm"><div class="nm"><span class="t">รวมต้นทุนทุกแถวข้างบน</span></div><div class="qp"><input type="text" inputmode="decimal" autocomplete="off" id="exsum-'+pid+'" data-k="exsum" data-pid="'+pid+'" aria-label="ผลรวม"><span class="u">บาท</span><span data-exs="sum" data-pid="'+pid+'"></span></div></div></section>';
+  return h;
 }
 function checkHtml(){
   return'<div class="chk">'+CHECKS.map(function(c,i){return'<label><input type="checkbox" data-act="check" data-i="'+i+'"'+(S.check[i]?' checked':'')+'><span><b>'+c[0]+'</b><small>'+c[1]+'</small></span></label>'}).join('')+'</div>'+
@@ -424,83 +595,85 @@ function checkHtml(){
 }
 function compareHtml(){
   var rows=[['ต้นทุนรวมทั้งรอบ (บาท)','total'],['ขายได้จริง (หน่วย)','made'],['ต้นทุนต่อหน่วย (บาท)','unit'],['ราคาที่ตั้ง (บาท)','sell'],['กำไรต่อหน่วย (บาท)','profitUnit'],['กำไร (% ของต้นทุน)','gpct'],['เงินที่ได้ถ้าขายผ่านช่องทางที่มีค่าธรรมเนียม (บาท)','recv'],['กำไรจริงหลังหักค่าธรรมเนียม (บาท)','real']];
-  return'<div class="tblwrap" data-compare><table><thead><tr><th></th>'+PIDS.map(function(k){return'<th class="n">'+DEF[k].badge+' '+DEF[k].short+'</th>'}).join('')+'</tr></thead><tbody>'+
+  return'<div class="tblwrap"><table><thead><tr><th></th>'+PIDS.map(function(k){return'<th class="n">'+DEF[k].badge+' '+DEF[k].short+'</th>'}).join('')+'</tr></thead><tbody>'+
    rows.map(function(r){return'<tr><td>'+r[0]+'</td>'+PIDS.map(function(k){return'<td class="n" data-o="'+r[1]+'" data-pid="'+k+'"></td>'}).join('')+'</tr>'}).join('')+'</tbody></table></div>';
 }
-function fillCompare(){}
 function sheetHtml(){
-  var r='';for(var i=0;i<7;i++)r+='<tr class="blank"><td></td><td></td></tr>';
-  return'<div class="tblwrap"><table><thead><tr><th colspan="2">ใบบันทึกต้นทุนการผลิต 1 รอบ</th></tr></thead><tbody>'+
-   '<tr><td>วันที่ผลิต</td><td></td></tr><tr><td>ผลิตภัณฑ์</td><td></td></tr><tr><th>รายการ (วัตถุดิบ บรรจุภัณฑ์ แรงงาน ค่าใช้จ่ายอื่น)</th><th class="n">บาท</th></tr>'+r+
-   '<tr><td><b>1. ต้นทุนรวม</b></td><td></td></tr><tr><td><b>2. จำนวนที่ขายได้จริง</b></td><td></td></tr><tr><td><b>3. ต้นทุนต่อหน่วย (ข้อ 1 ÷ ข้อ 2)</b></td><td></td></tr>'+
-   '<tr><td><b>4. กำไรที่ต้องการ (30–40% ของต้นทุน)</b></td><td></td></tr><tr><td><b>5. ราคาขายที่ตั้ง (ปัดแล้ว)</b></td><td></td></tr></tbody></table></div>';
+  function blank(n,cols){var r='';for(var i=0;i<n;i++){r+='<tr class="blank">'+new Array(cols+1).join('<td></td>')+'</tr>'}return r}
+  var hd='<tr><th>รายการ</th><th>ใช้ปริมาณ</th><th>ราคาต่อหน่วย</th><th class="n">รวมเงิน (บาท)</th></tr>';
+  return'<div class="tblwrap"><table><thead><tr><th colspan="4">ใบคำนวณต้นทุน 1 รอบการผลิต</th></tr></thead><tbody>'+
+   '<tr><td colspan="2">ชื่อผลิตภัณฑ์</td><td colspan="2"></td></tr><tr><td colspan="2">วันที่ผลิต</td><td colspan="2"></td></tr><tr><td colspan="2">ผู้จดบันทึก</td><td colspan="2"></td></tr>'+
+   '<tr><th colspan="4">① ต้นทุนวัตถุดิบ/เครื่องปรุง</th></tr>'+hd+blank(5,4)+'<tr><td colspan="3">รวมวัตถุดิบ</td><td></td></tr>'+
+   '<tr><th colspan="4">② บรรจุภัณฑ์</th></tr>'+hd+blank(2,4)+
+   '<tr><th colspan="4">③ พลังงาน (ถ่าน แก๊ส ไฟ)</th></tr>'+hd+blank(2,4)+
+   '<tr><th colspan="4">④ ค่าแรง</th></tr>'+hd+blank(1,4)+
+   '<tr><td colspan="3"><b>ต้นทุนรวมทั้งหมด</b></td><td></td></tr><tr><td colspan="3"><b>⑤ ได้ผลผลิตที่ขายได้จริง (หน่วย)</b></td><td></td></tr><tr><td colspan="3"><b>ต้นทุนต่อหน่วย (ต้นทุนรวม ÷ ผลผลิต)</b></td><td></td></tr><tr><td colspan="3"><b>ราคาขายที่ตั้ง</b></td><td></td></tr></tbody></table></div>';
 }
 function summaryText(){
-  var t='สรุปต้นทุนและราคา (ตัวเลขจากเครื่องคิดเลข)\n';
-  PIDS.forEach(function(k){var c=compute(k),d=DEF[k];t+='\n'+d.short+' '+d.sub+'\n  ต้นทุนรวม '+fmt(c.total)+' บาท ÷ '+fmt(c.made,0)+' '+d.unit+' = '+fmt(c.unit)+' บาทต่อ'+d.unit+'\n  ราคาที่ตั้ง '+fmt(c.sell)+' บาท กำไร '+fmt(c.sell-c.unit)+' บาท\n'});
+  var t='สรุปต้นทุนและราคา (ตัวเลขจากเครื่องคำนวณ)\n';
+  PIDS.forEach(function(k){var c=compute(k),d=DEF[k];t+='\n'+d.short+'\n  ต้นทุนรวม '+fmt(c.total)+' บาท ÷ '+fmt(c.made,0)+' '+d.unit+' = '+fmt(c.unit)+' บาทต่อ'+d.unit+'\n  ราคาที่ตั้ง '+fmt(c.sell)+' บาท กำไร '+fmt(c.sell-c.unit)+' บาท\n'});
   return t;
 }
-var QR_URL='https://wisuttorn.github.io/costing/';var QR_SVG="<svg role=\"img\" aria-label=\"QR code \u0e40\u0e1b\u0e34\u0e14\u0e2b\u0e19\u0e49\u0e32\u0e40\u0e27\u0e47\u0e1a\u0e19\u0e35\u0e49\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 37 37\" class=\"segno\"><path fill=\"#fff\" d=\"M0 0h37v37h-37z\"/><path class=\"qrline\" stroke=\"#18213a\" d=\"M4 4.5h7m3 0h1m3 0h1m1 0h1m2 0h1m2 0h7m-29 1h1m5 0h1m3 0h1m1 0h1m2 0h1m1 0h2m3 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m4 0h1m3 0h1m1 0h1m4 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m3 0h1m2 0h1m4 0h1m3 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m4 0h2m2 0h1m3 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m1 0h4m3 0h3m1 0h2m1 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-20 1h2m1 0h2m3 0h1m2 0h1m-21 1h1m2 0h1m1 0h2m1 0h2m1 0h1m2 0h1m1 0h1m1 0h1m1 0h2m1 0h1m-22 1h1m2 0h1m2 0h2m1 0h1m1 0h1m2 0h1m3 0h1m1 0h1m2 0h1m2 0h1m-26 1h2m1 0h2m2 0h1m2 0h2m2 0h1m1 0h1m1 0h1m1 0h5m-28 1h2m2 0h2m5 0h3m2 0h1m2 0h3m1 0h1m2 0h2m-27 1h2m1 0h3m3 0h2m2 0h4m1 0h5m1 0h1m1 0h2m-29 1h1m1 0h2m5 0h3m1 0h2m4 0h2m-21 1h1m1 0h2m1 0h3m2 0h1m2 0h2m2 0h2m1 0h3m2 0h4m-29 1h1m1 0h1m1 0h2m3 0h4m2 0h1m1 0h2m1 0h2m1 0h1m1 0h1m1 0h1m-27 1h2m2 0h2m4 0h3m1 0h1m1 0h1m1 0h3m1 0h1m3 0h1m-26 1h2m3 0h1m1 0h2m1 0h3m1 0h2m3 0h3m1 0h1m2 0h1m-29 1h1m1 0h1m1 0h1m1 0h4m4 0h1m1 0h2m2 0h2m1 0h2m2 0h2m-26 1h2m2 0h1m1 0h3m2 0h2m1 0h4m2 0h2m2 0h2m-29 1h1m2 0h2m1 0h2m1 0h1m1 0h2m5 0h7m1 0h1m-19 1h1m2 0h1m2 0h1m1 0h1m2 0h2m3 0h1m1 0h3m-29 1h7m3 0h1m1 0h1m3 0h2m2 0h1m1 0h1m1 0h1m2 0h1m-28 1h1m5 0h1m1 0h2m1 0h1m2 0h1m3 0h3m3 0h4m-28 1h1m1 0h3m1 0h1m4 0h2m4 0h1m2 0h5m2 0h2m-29 1h1m1 0h3m1 0h1m1 0h2m7 0h1m2 0h1m1 0h6m-28 1h1m1 0h3m1 0h1m2 0h1m2 0h1m1 0h1m3 0h4m2 0h3m1 0h1m-29 1h1m5 0h1m2 0h1m1 0h3m2 0h6m2 0h1m2 0h1m-28 1h7m1 0h2m1 0h1m2 0h2m1 0h1m2 0h1m1 0h3m2 0h1\"/></svg>";
-function qrBlock(){return'<div class="qr">'+QR_SVG+'<div><b>สแกนเพื่อเปิดบนมือถือ</b><br><a href="'+QR_URL+'" target="_blank" rel="noopener">'+QR_URL.replace('https://','')+'</a></div></div>'}
+function qrBlock(svg,url,label){return'<div class="linkcard">'+svg+'<div><b>'+label+'</b><a href="'+url+'" target="_blank" rel="noopener">'+url.replace('https://','')+'</a></div></div>'}
+
+/* ---------- slides ---------- */
+var P2='ช่วงที่ 2 · ต้นทุนมีอะไรบ้าง',P3='ช่วงที่ 3 · ฝึกจดรายการต้นทุน',P4='ช่วงที่ 4 · ต้นทุนต่อหน่วย',P5='ช่วงที่ 5 · ต้นทุนที่มักลืม',P6='ช่วงที่ 6 · ตั้งราคา',P7='ช่วงที่ 7 · ฝึกครบ 3 ผลิตภัณฑ์',P8='ช่วงที่ 8 · สรุป';
 var SL=[
-{id:'cover',k:'cover',n:'แนะนำตัว บอกว่าบ่ายนี้จะใช้ตัวเลขกลมๆ เพื่อให้คิดตามได้ ไม่ต้องกลัวผิด',
- h:function(){return'<h1>การคิดบัญชีต้นทุนและการกำหนดราคาแบบง่ายๆ</h1><p class="lead">สำหรับน้ำพริกสด น้ำพริกแห้งกรอบ และข้าวเกรียบดักแด้ไหมอีรี่</p>'+
-  '<div class="meta"><b>อ.ดร.วิสุทธร จิตอารี</b><span>คณะบริหารธุรกิจ มหาวิทยาลัยเชียงใหม่</span><span class="muted">25 พฤศจิกายน 2569</span></div>'+qrBlock()}},
-{id:'goals',part:'',t:'บ่ายนี้เราจะทำได้ 3 อย่าง',k:'cards',n:'บอกเป้าหมายสั้นๆ และกำหนดการ: ฝึกคิดรายสินค้าก่อน แล้วค่อยตั้งราคา มีพักกลางบ่าย',
- h:function(){return steps([['รู้ว่าต้นทุนมีอะไรบ้าง','ไม่ตกหล่นรายการที่ลืมนับ'],['คิดต้นทุนต่อกระปุกได้เอง','ใช้เครื่องคิดเลขบนมือถือ'],['ตั้งราคาขายได้อย่างมั่นใจ','รู้ว่ากำไรเท่าไร หลังหักค่าธรรมเนียมช่องทางขาย']])}},
-{id:'howto',part:'',t:'ใช้หน้านี้บนมือถืออย่างไร',k:'cards',n:'ให้ทุกคนลองกด ก+ และ สารบัญ ช่วยผู้ที่ไม่ถนัดมือถือ ตัวเลขที่กรอกเก็บไว้ในเครื่องของแต่ละคน',
- h:function(){return cards([['ปุ่มถัดไป','อยู่ด้านล่างจอ กดเพื่อไปหน้าต่อไป ปุ่มก่อนหน้าไว้ย้อนกลับ'],['ก+ ก−','ขยายหรือลดขนาดตัวอักษร ที่มุมบนของหน้า'],['สารบัญ','กดเพื่อดูรายการหน้าทั้งหมด'],['ช่องสีน้ำเงิน','พิมพ์ตัวเลขได้ ผลลัพธ์เปลี่ยนทันที กดเริ่มใหม่ได้ทุกเมื่อ']])}},
-{id:'problem',part:'',t:'ปัญหาที่พบ',k:'text',n:'เล่าที่มา: ผลการทดลองตลาดรอบที่ 2 พบว่าต้นทุนแต่ละรุ่นการผลิตไม่เท่ากัน จึงตั้งราคายาก',
- h:function(){return'<p class="hero">ต้นทุนไม่เท่ากันในแต่ละรอบการผลิต จึงตั้งราคาขายได้ยาก</p><div class="cards"><div class="card"><span class="stat">228</span><p>ผู้ร่วมทดลองชิมครั้งที่ 2</p></div><div class="card"><span class="stat">128 + 100</span><p>เชียงใหม่ 128 ราย ขอนแก่น 100 ราย</p></div></div>'}},
-{id:'quiz1',part:'',t:'ลองคิดดู: รอบไหนต้นทุนต่อกระปุกสูงกว่า',k:'quiz',n:'ให้ยกมือโหวตก่อนกดตอบ แล้วเฉลยพร้อมกัน นี่คือหัวใจของวันนี้: จำนวนที่ได้จริงเปลี่ยน ต้นทุนต่อกระปุกก็เปลี่ยน',h:function(){return quizHtml(qz.q1)}},
-{id:'products',part:'',t:'ผลิตภัณฑ์ 3 อย่างที่ใช้ฝึก',k:'cards',n:'ผลิตภัณฑ์ตรงกับที่ผลิตในโครงการ รอบละกี่หน่วยเป็นตัวเลขสมมติ ให้แก้เป็นของจริงเมื่อฝึก',
- h:function(){return'<div class="cards">'+PIDS.map(function(k){var d=DEF[k];return'<div class="card '+d.cls+'">'+pn(k)+'<p>'+d.sub+'</p><p class="muted">ขายเป็น'+d.unit+' · รอบฝึก ทำ '+d.made+' '+d.unit+'</p></div>'}).join('')+'</div>'}},
+{id:'cover',k:'cover',h:function(){return'<h1>การคิดบัญชีต้นทุนและการกำหนดราคาแบบง่ายๆ</h1><p class="lead">สำหรับน้ำพริกแห้ง ข้าวเกรียบ และน้ำพริกสดดักแด้ไหมอีรี่</p>'+
+  '<div class="meta"><b>อ.ดร.วิสุทธร จิตอารี</b><span>คณะบริหารธุรกิจ มหาวิทยาลัยเชียงใหม่</span><span class="muted">25 พฤศจิกายน 2569 · 9.00–12.00 น.</span></div>'+qrBlock(QR_SLIDES,SLIDES_URL,'สแกนเพื่อเปิดบนมือถือ')}},
+{id:'goals',part:'',t:'เช้านี้เราจะทำได้ 3 อย่าง',k:'cards',h:function(){return steps([['รู้ว่าต้นทุนมีอะไรบ้าง','เล่นเกมจัดกลุ่มต้นทุน แล้วตรวจว่าเราลืมนับอะไร'],['คิดต้นทุนต่อกระปุกหรือต่อถุงได้เอง','ใช้ตัวเลขจริงจากสูตรของกลุ่ม คิดด้วยมือถือและเขียนวิธีคิด'],['ตั้งราคาขายได้อย่างมั่นใจ','รู้กำไรจริง แม้หักค่าธรรมเนียมช่องทางขายแล้ว']])}},
+{id:'howto',part:'',t:'ใช้หน้านี้บนมือถืออย่างไร',k:'cards',h:function(){return cards([['ปุ่มถัดไป','อยู่ด้านล่างจอ กดเพื่อไปหน้าต่อไป ปุ่มก่อนหน้าไว้ย้อนกลับ'],['ก+ ก−','ขยายหรือลดขนาดตัวอักษร ที่มุมบนของหน้า'],['สารบัญ','กดเพื่อดูรายการหน้าทั้งหมด'],['ช่องสีน้ำเงิน','พิมพ์ตัวเลขได้ ผลลัพธ์เปลี่ยนทันที กดเริ่มใหม่ได้ทุกเมื่อ']])}},
+{id:'problem',part:'',t:'ปัญหาที่พบ',k:'text',h:function(){return'<p class="hero">ต้นทุนไม่เท่ากันในแต่ละรอบการผลิต จึงตั้งราคาขายได้ยาก</p>'}},
+{id:'quiz1',part:'',t:'ลองคิดดู: รอบไหนต้นทุนต่อกระปุกสูงกว่า',k:'quiz',h:function(){return quizHtml(qz.q1)}},
+{id:'products',part:'',t:'ผลิตภัณฑ์ 3 อย่างที่ใช้ฝึก',k:'cards',h:function(){return'<div class="cards">'+PIDS.map(function(k){var d=DEF[k];return'<div class="card '+d.cls+'">'+pn(k)+'<p>'+d.batch+'</p><p class="muted small">อุปกรณ์: '+d.equip+'</p></div>'}).join('')+'</div>'}},
 
-{id:'formula',part:'ช่วงที่ 2 · ต้นทุนมีอะไรบ้าง',t:'คิดราคาได้ใน 4 ขั้น',k:'steps',n:'นี่คือโครงของทั้งบ่าย ทุกหน้าต่อไปคือการลงรายละเอียดทีละขั้น',
- h:function(){return steps([['หาต้นทุนการผลิตทั้งหมด','รวมค่าใช้จ่ายทุกรายการที่เกิดขึ้นในการผลิตหนึ่งรอบ'],['หาต้นทุนต่อหน่วย','ต้นทุนทั้งหมด ÷ จำนวนกระปุกที่ผลิตได้จริง'],['บวกกำไรที่ต้องการ','ต้นทุนต่อกระปุก + กำไร'],['กำหนดราคาขาย','ปรับราคาให้เหมาะกับตลาดและกำลังซื้อของลูกค้า']])}},
-{id:'groups',part:'ช่วงที่ 2 · ต้นทุนมีอะไรบ้าง',t:'ต้นทุนแบ่งเป็น 4 กลุ่ม',k:'cards',n:'ย่อรายการต้นทุน 10 ข้อให้เหลือ 4 กลุ่มที่จำง่าย ถามผู้เรียนว่าของแต่ละกลุ่มมีอะไรที่นึกออกบ้าง',
- h:function(){return cards([['วัตถุดิบ','ดักแด้ไหมอีรี่ พริก กระเทียม หอมแดง น้ำปลา น้ำตาล น้ำมัน เครื่องเทศ'],['บรรจุภัณฑ์','กระปุก ฝาปิด ซีล ฉลาก ถุง'],['แรงงาน','ล้างวัตถุดิบ เตรียม ปรุง บรรจุ'],['ค่าใช้จ่ายอื่น','แก๊ส ไฟ น้ำ ตู้เย็นและน้ำแข็ง ขนส่ง การตลาด ค่าธรรมเนียมช่องทางขาย ของเสีย']])}},
-{id:'check',part:'ช่วงที่ 2 · ต้นทุนมีอะไรบ้าง',t:'ท่านนับต้นทุนอะไรบ้างแล้ว',k:'check',n:'ให้ติ๊กตามรอบการผลิตล่าสุดของตัวเอง รายการที่ไม่ได้ติ๊กคือที่มักลืม มักเป็นค่าแรง ค่าขนส่ง ของเสีย',h:function(){return checkHtml()}},
-{id:'quiz2',part:'ช่วงที่ 2 · ต้นทุนมีอะไรบ้าง',t:'ลองตอบ: นับเป็นต้นทุนหรือไม่',k:'quiz',n:'ข้อค่าแรงตัวเองมักถกเถียงกัน ให้เปิดให้พูดคุย แล้วสรุปว่าต้องนับ อย่างน้อยให้เห็นตัวเลข',h:function(){return quizHtml(qz.q2)}},
+{id:'formula',part:P2,t:'คิดราคาได้ใน 4 ขั้น',k:'steps',h:function(){return steps([['หาต้นทุนการผลิตทั้งหมด','รวมค่าใช้จ่ายทุกรายการที่เกิดขึ้นในการผลิตหนึ่งรอบ'],['หาต้นทุนต่อหน่วย','ต้นทุนทั้งหมด ÷ จำนวนที่ผลิตได้จริง'],['บวกกำไรที่ต้องการ','ต้นทุนต่อหน่วย + กำไร'],['กำหนดราคาขาย','ปรับราคาให้เหมาะกับตลาดและกำลังซื้อของลูกค้า']])}},
+{id:'order',part:P2,t:'เกม: เรียงขั้นตอนให้ถูก',k:'game',h:function(){return ordHtml()}},
+{id:'groups',part:P2,t:'ต้นทุนแบ่งเป็น 5 กลุ่ม',k:'cards',h:function(){return cards([['ค่าวัตถุดิบ','ดักแด้ไหม พริก กระเทียม หอมแดง ปลาร้า ผงนัว มะขามเปียก น้ำมันพืช'],['ค่าแรงงาน','ล้าง เตรียม ปรุง บรรจุ รวมถึงแรงของตัวเราเอง'],['ค่าบรรจุภัณฑ์','ถุงแกงกันร้อน กระปุก ฝา ฟอยล์ซีล ฉลาก'],['ค่าใช้จ่ายในการผลิตอื่นๆ','ถ่าน แก๊ส ไฟฟ้า น้ำ และของเสียที่เกิดตอนผลิต'],['ค่าใช้จ่ายอื่น','ค่าส่งพัสดุ ค่าถ่ายภาพ ค่าโฆษณา ค่าธรรมเนียมช่องทางขาย']])}},
+{id:'sort',part:P2,t:'เกม: จัดกลุ่มต้นทุน 5 กลุ่ม',k:'game',h:function(){return sortHtml()}},
+{id:'check',part:P2,t:'ท่านนับต้นทุนอะไรบ้างแล้ว',k:'check',h:function(){return checkHtml()}},
+{id:'quiz2',part:P2,t:'ลองกด: รายการนี้เป็นต้นทุนหรือไม่',k:'quiz',h:function(){return'<p class="lead">กดเลือกคำตอบของแต่ละรายการ จะบอกเหตุผลทันที</p>'+quizHtml(qz.q2)}},
 
-{id:'example',part:'ช่วงที่ 3 · ฝึก 1 จดรายการต้นทุน',t:'ตัวอย่างต้นทุน 1 รอบการผลิต',k:'text',n:'อ่านตารางไปพร้อมกัน ชี้ว่ารายการไหนอยู่กลุ่มไหน ตัวเลขทั้งหมดเป็นตัวเลขสมมติ',h:function(){return tabsHtml(S.tab)+staticTable(S.tab)}},
-{id:'practice1',part:'ช่วงที่ 3 · ฝึก 1 จดรายการต้นทุน',t:'ฝึก 1: แก้ตัวเลขเป็นของท่าน',k:'calc',n:'ครูทำให้ดูก่อน 1 บรรทัด แล้วให้ผู้เรียนแก้ตัวเลขตามจริง เดินดูใกล้ๆ ผู้ที่ติด ปล่อยให้ลองเพิ่มรายการที่เพิ่งนึกได้',h:function(){return'<p class="lead">แก้ตัวเลขแต่ละบรรทัดเป็นราคาที่ท่านซื้อจริง ถ้ามีรายการที่ลืม กดเพิ่ม</p>'+calcBox(S.tab,'cost',true)}},
+{id:'example',part:P3,t:'ตัวอย่างใบต้นทุนจากสูตรชุมชน',k:'text',h:function(){return tabsHtml(S.tab)+staticTable(S.tab)}},
+{id:'exAmt',part:P3,t:'ฝึก: คิดเงินแต่ละแถวเอง',k:'calc',h:function(){return tabsHtml(S.tab)+exHtml(S.tab)}},
+{id:'practice1',part:P3,t:'ฝึก: ใส่ราคาในแถวที่ยังว่าง',k:'calc',h:function(){return'<p class="lead">แถวที่มีป้าย ใส่เอง ยังไม่มีราคาในสูตร ใส่ราคาที่ท่านซื้อจริง แล้วดูต้นทุนต่อหน่วยเปลี่ยน</p>'+calcBox(S.tab,'cost',true)}},
 
-{id:'actual',part:'ช่วงที่ 4 · ต้นทุนต่อกระปุก',t:'หารด้วยจำนวนที่ได้จริง',k:'calc',n:'เลื่อนแถบจาก 50 ไปที่ 40 แล้วให้ผู้เรียนบอกว่าต้นทุนต่อกระปุกเปลี่ยนเท่าไร จุดนี้คือสาเหตุที่ต้นทุนแต่ละรอบไม่เท่ากัน',h:function(){return'<p class="lead">ต้นทุนรวมเท่าเดิม แต่ถ้าได้ของน้อยลง ต้นทุนต่อหน่วยจะสูงขึ้น ลองเลื่อนแถบดู</p>'+calcBox(S.tab,'made',true)}},
-{id:'quiz3',part:'ช่วงที่ 4 · ต้นทุนต่อกระปุก',t:'ลองคิดเลข',k:'quiz',n:'ให้ใช้เครื่องคิดเลขในมือถือได้ เน้นว่าหารด้วยจำนวนที่ขายได้จริง ไม่ใช่จำนวนที่ตั้งใจทำ',h:function(){return quizHtml(qz.q3)}},
-{id:'break',part:'พัก',t:'พักสักครู่',k:'break',n:'กดเริ่มนับถอยหลังระหว่างพักเตรียมสไลด์ต่อไป',
- h:function(){return'<p class="timer" id="tm" aria-live="off">10:00</p><div class="seg"><button class="btn" type="button" data-act="tstart">เริ่มนับ</button><button class="btn sec" type="button" data-act="treset">ตั้งใหม่</button></div><p class="lead">กลับมาแล้วเราจะดูต้นทุนที่มักถูกลืม และเริ่มตั้งราคา</p>'}},
+{id:'actual',part:P4,t:'หารด้วยจำนวนที่ได้จริง',k:'calc',h:function(){return'<p class="lead">ต้นทุนรวมเท่าเดิม แต่ถ้าได้ของน้อยลง ต้นทุนต่อหน่วยจะสูงขึ้น ลองเลื่อนแถบดู</p>'+calcBox(S.tab,'made',true)}},
+{id:'quiz3',part:P4,t:'ลองคิดเลข',k:'quiz',h:function(){return'<p class="lead">เขียนวิธีคิดด้วยตัวเลขลงในช่อง แล้วกดตรวจคำตอบ ใช้เครื่องคิดเลขในมือถือได้</p>'+wkHtml(wk3)}},
+{id:'break',part:'พัก',t:'พักสักครู่ 15 นาที',k:'break',h:function(){return'<p class="timer" id="tm" aria-live="off">15:00</p><div class="seg"><button class="btn" type="button" data-act="tstart">เริ่มนับ</button><button class="btn sec" type="button" data-act="treset">ตั้งใหม่</button></div><p class="lead">กลับมาแล้วเราจะดูต้นทุนที่มักถูกลืม และเริ่มตั้งราคา</p>'}},
 
-{id:'once',part:'ช่วงที่ 5 · ต้นทุนที่มักลืม',t:'ของที่ซื้อครั้งเดียว ใช้หลายรอบ',k:'calc',n:'ตัวอย่างเครื่องซีลตามที่เสนอในรายงาน ราคาและจำนวนรอบเป็นตัวเลขสมมติ ให้ใส่ราคาจริงได้',h:function(){return'<p class="lead">เครื่องซีล เตา หรือหม้อ ไม่ได้หมดในรอบเดียว ให้หารเป็นต้นทุนต่อรอบ แล้วนำไปรวมในรายการต้นทุน</p>'+calcBox(S.tab,'am',true)}},
-{id:'labor',part:'ช่วงที่ 5 · ต้นทุนที่มักลืม',t:'ค่าแรงของตัวเองก็เป็นต้นทุน',k:'calc',n:'ให้ผู้เรียนใส่จำนวนคนและค่าแรงจริง เห็นว่าไม่นับค่าแรงทำให้ต้นทุนต่ำกว่าจริงกี่บาทต่อกระปุก',h:function(){return calcBox(S.tab,'lab',true)}},
-{id:'quiz4',part:'ช่วงที่ 5 · ต้นทุนที่มักลืม',t:'ลองคิดเลข',k:'quiz',n:'ตอบพร้อมกัน แล้วเฉลย',h:function(){return quizHtml(qz.q4)}},
+{id:'once',part:P5,t:'ของที่ซื้อครั้งเดียว ใช้หลายรอบ',k:'calc',h:function(){return'<p class="lead">กะทะ หม้อนึ่ง หรือเครื่องซีล ไม่ได้หมดในรอบเดียว ให้หารเป็นต้นทุนต่อรอบ แล้วนำไปรวมในรายการต้นทุน</p>'+calcBox(S.tab,'am',true)}},
+{id:'labor',part:P5,t:'ค่าแรงของตัวเองก็เป็นต้นทุน',k:'calc',h:function(){return calcBox(S.tab,'lab',true)}},
+{id:'quiz4',part:P5,t:'ลองคิดเลข',k:'quiz',h:function(){return'<p class="lead">เขียนวิธีคิดด้วยตัวเลขลงในช่อง แล้วกดตรวจคำตอบ</p>'+wkHtml(wk4)}},
 
-{id:'markup',part:'ช่วงที่ 6 · ตั้งราคา',t:'ราคาขาย = ต้นทุน + กำไร',k:'text',n:'ย้ำว่า 30–40% คิดจากต้นทุน ไม่ใช่จากราคาขาย ใช้ตัวอย่าง 32 บาท',
- h:function(){var d=DEF[S.tab],u=defUnit(S.tab);return tabsHtml(S.tab)+'<div class="eq"><div class="t"><span>ต้นทุนต่อ'+d.unit+'</span><b>'+fmt(u)+'</b><i>บาท</i></div><div class="op" aria-hidden="true">×</div><div class="t"><span>บวกกำไร 30–40%</span><b>1.3 – 1.4</b></div><div class="op" aria-hidden="true">=</div><div class="t hi"><span>ราคาที่คิดได้</span><b>'+fmt(u*1.3)+' – '+fmt(u*1.4)+'</b><i>บาท</i></div></div><p class="callout">กำไร 30–40% คิดจากต้นทุน ไม่ใช่จากราคาขาย</p>'}},
-{id:'price',part:'ช่วงที่ 6 · ตั้งราคา',t:'ฝึก: ตั้งราคาขาย',k:'calc',n:'เลื่อนกำไรแล้วดูราคา ลองปัดเป็นหลัก 5 ให้ผู้เรียนเลือกราคาที่ตัวเองจะขาย',h:function(){return'<p class="lead">เลือกกำไรที่ต้องการ แล้วปัดราคาให้จำง่าย</p>'+calcBox(S.tab,'price',true)}},
-{id:'final',part:'ช่วงที่ 6 · ตั้งราคา',t:'ราคาที่คำนวณได้ ยังไม่ใช่ราคาสุดท้าย',k:'cards',n:'ถามผู้เรียนว่าลูกค้าที่ผ่านมาซื้อน้ำพริกในราคาเท่าไร อ้างอิงผลทดลองชิมที่ได้เก็บไว้',h:function(){return cards([['ปัดให้จำง่าย','เช่น 44.8 บาท ปัดเป็น 45 บาท'],['ดูกำลังซื้อของลูกค้า','ราคาที่ลูกค้ายอมจ่ายจากผลทดลองชิม'],['เทียบสินค้าใกล้เคียง','ราคาน้ำพริกหรือขนมกรอบในช่องทางที่ขาย'],['ห้ามต่ำกว่าต้นทุน','ถ้าต่ำกว่า ยิ่งขายยิ่งขาดทุน']])}},
-{id:'fee',part:'ช่วงที่ 6 · ตั้งราคา',t:'ขายออนไลน์ มีค่าธรรมเนียม',k:'calc',n:'ลองค่าธรรมเนียม 10% จะเห็นว่ากำไรจริงต่ำกว่าเป้า แล้วดูบรรทัดราคาที่ควรตั้ง ค่า 10% เป็นตัวเลขสมมติ ให้ใช้ค่าจริงของแพลตฟอร์มหรือร้านฝากขาย',h:function(){return'<p class="lead">ช่องทางขายหักค่าธรรมเนียมจากราคาขาย ต้องคิดล่วงหน้า ไม่อย่างนั้นกำไรหาย</p>'+calcBox(S.tab,'fee',true)}},
-{id:'quiz5',part:'ช่วงที่ 6 · ตั้งราคา',t:'ลองคิดเลข',k:'quiz',n:'ตอบแล้วเฉลย ก่อนเข้าฝึกกลุ่ม',h:function(){return quizHtml(qz.q5)}},
+{id:'markup',part:P6,t:'ราคาขาย = ต้นทุน + กำไร',k:'text',h:function(){var d=DEF[S.tab],u=defUnit(S.tab);return tabsHtml(S.tab)+'<div class="eq"><div class="t"><span>ต้นทุนต่อ'+d.unit+' (จากสูตร)</span><b>'+fmt(u)+'</b><i>บาท</i></div><div class="op" aria-hidden="true">×</div><div class="t"><span>บวกกำไร 30–40%</span><b>1.3 – 1.4</b></div><div class="op" aria-hidden="true">=</div><div class="t hi"><span>ราคาที่คิดได้</span><b>'+fmt(u*1.3)+' – '+fmt(u*1.4)+'</b><i>บาท</i></div></div><p class="callout">กำไร 30–40% คิดจากต้นทุน ไม่ใช่จากราคาขาย ต้นทุนข้างบนยังไม่รวมแถวที่ใส่เอง</p>'}},
+{id:'price',part:P6,t:'ฝึก: ตั้งราคาขาย',k:'calc',h:function(){return'<p class="lead">เลือกกำไรที่ต้องการ แล้วปัดราคาให้จำง่าย</p>'+calcBox(S.tab,'price',true)}},
+{id:'final',part:P6,t:'ราคาที่คำนวณได้ ยังไม่ใช่ราคาสุดท้าย',k:'cards',h:function(){return cards([['ปัดให้จำง่าย','เช่น ข้าวเกรียบต้นทุน 7.67 บาท บวกกำไร 35% ได้ 10.35 บาท ปัดเป็น 10 บาท'],['ดูกำลังซื้อของลูกค้า','ราคาที่ลูกค้ายอมจ่ายจากผลทดลองชิม'],['เทียบสินค้าใกล้เคียง','ราคาน้ำพริกหรือขนมกรอบในช่องทางที่ขาย'],['ห้ามต่ำกว่าต้นทุน','ถ้าต่ำกว่า ยิ่งขายยิ่งขาดทุน']])}},
+{id:'fee',part:P6,t:'ขายออนไลน์ มีค่าธรรมเนียม',k:'calc',h:function(){return'<p class="lead">ช่องทางขายหักค่าธรรมเนียมจากราคาขาย ต้องคิดล่วงหน้า ไม่อย่างนั้นกำไรหาย</p>'+calcBox(S.tab,'fee',true)}},
+{id:'quiz5',part:P6,t:'ลองคิดเลข',k:'quiz',h:function(){return'<p class="lead">เขียนวิธีคิดด้วยตัวเลขลงในช่อง แล้วกดตรวจคำตอบ</p>'+wkHtml(wk5)}},
 
-{id:'mission',part:'ช่วงที่ 7 · ฝึก 2–3 ครบ 3 ผลิตภัณฑ์',t:'ภารกิจกลุ่ม: คิดราคาสินค้าของกลุ่มท่าน',k:'steps',n:'แบ่ง 3 กลุ่ม กลุ่มละหนึ่งสินค้า หรือให้ทุกกลุ่มทำครบถ้าเวลาพอ แล้วให้นำเสนอ',h:function(){return steps([['เลือกสินค้า','แตะแท็บสินค้าที่กลุ่มรับผิดชอบ'],['แก้รายการต้นทุนเป็นราคาจริง','เพิ่มรายการที่ลืม ใส่จำนวนที่ขายได้จริง'],['เลือกกำไรและปัดราคา','เทียบกับสิ่งที่ลูกค้ายอมจ่าย'],['ตรวจกำไรหลังหักค่าธรรมเนียม','ถ้าขายออนไลน์หรือฝากขาย']])}},
-{id:'practice2',part:'ช่วงที่ 7 · ฝึก 2–3 ครบ 3 ผลิตภัณฑ์',t:'ฝึก 2–3: เครื่องคิดเลขต้นทุนและราคา',k:'calc',n:'เดินดูแต่ละกลุ่ม ถามว่าต้นทุนต่อหน่วยเท่าไร และราคาที่ตั้งอยู่ในช่วง 30–40% หรือไม่',h:function(){return calcBox(S.tab,'cost,price,fee',true)}},
-{id:'compare',part:'ช่วงที่ 7 · ฝึก 2–3 ครบ 3 ผลิตภัณฑ์',t:'เปรียบเทียบ 3 ผลิตภัณฑ์',k:'text',n:'ตารางดึงตัวเลขจากเครื่องคิดเลขของเครื่องนี้ ตัวเลขเริ่มต้นเป็นตัวอย่างสมมติ',h:function(){return compareHtml()}},
-{id:'present',part:'ช่วงที่ 7 · ฝึก 2–3 ครบ 3 ผลิตภัณฑ์',t:'เล่าให้เพื่อนฟังกลุ่มละ 1 นาที',k:'cards',n:'กลุ่มละ 1 นาที ปรบมือให้ทุกกลุ่ม สรุปสิ่งที่พบร่วมกัน',h:function(){return cards([['ต้นทุนต่อหน่วยเท่าไร','บอกตัวเลขและวิธีคิด'],['ตั้งราคาเท่าไร เพราะอะไร','กำไรเท่าไร ลูกค้ายอมจ่ายหรือไม่'],['วันนี้เพิ่งนึกได้ว่าลืมนับอะไร','รายการที่ไม่เคยนับมาก่อน']])}},
+{id:'mission',part:P7,t:'ภารกิจกลุ่ม: คิดราคาสินค้าของกลุ่มท่าน',k:'steps',h:function(){return steps([['เลือกสินค้า','แตะแท็บสินค้าที่กลุ่มรับผิดชอบ'],['ใส่ราคาจริงในแถวที่ยังว่าง','บรรจุภัณฑ์ ค่าแรง พลังงาน และเพิ่มรายการที่ลืม'],['ใส่จำนวนที่ขายได้จริง','ดูต้นทุนต่อหน่วย'],['เลือกกำไรและปัดราคา','เทียบกับสิ่งที่ลูกค้ายอมจ่าย'],['ตรวจกำไรหลังหักค่าธรรมเนียม','ถ้าขายออนไลน์หรือฝากขาย']])}},
+{id:'practice2',part:P7,t:'ฝึกครบ: เครื่องคำนวณต้นทุนและราคา',k:'calc',h:function(){return calcBox(S.tab,'cost,price,fee,pl',true,true)}},
+{id:'compare',part:P7,t:'เปรียบเทียบ 3 ผลิตภัณฑ์',k:'text',h:function(){return compareHtml()}},
 
-{id:'summary',part:'ช่วงที่ 8 · สรุป',t:'จำไว้ 4 ข้อ',k:'steps',n:'ให้ทวนพร้อมกัน แล้วเปิดคะแนนตอบถูกของแต่ละคนให้ดูในเครื่องตัวเอง',h:function(){return steps([['จดทุกรายการ ทุกรอบ','วัตถุดิบ บรรจุภัณฑ์ แรงงาน ค่าใช้จ่ายอื่น'],['หารด้วยจำนวนที่ขายได้จริง','ไม่ใช่จำนวนที่ตั้งใจทำ'],['บวกกำไร 30–40% ของต้นทุน แล้วปัดราคา','ดูกำลังซื้อลูกค้าด้วย'],['คิดค่าธรรมเนียมช่องทางขายก่อนตั้งราคา','เพื่อให้กำไรจริงไม่หาย']])+'<p class="callout">คะแนนตอบถูกของท่านในเครื่องนี้: <span class="score" data-o="quizScore"></span></p>'}},
-{id:'sheet',part:'ช่วงที่ 8 · สรุป',t:'ใบบันทึกต้นทุนที่ใช้ได้ทุกรอบ',k:'sheet',n:'แนะนำให้ถ่ายภาพหน้านี้ไว้ แล้วจดมือทุกรอบการผลิต หรือกดคัดลอกสรุปของตัวเองไปเก็บในแอปโน้ต',h:function(){return sheetHtml()+'<div><button class="btn" type="button" data-act="copy">คัดลอกสรุปของฉัน</button> <span class="small muted" id="copyMsg" role="status"></span></div>'}},
-{id:'end',k:'end',n:'ถามตอบ แล้วแจ้งกำหนดการวันพรุ่งนี้',h:function(){return'<div class="kicker">จบหัวข้อ</div><h1>ขอบคุณ ถามตอบ</h1><div class="meta"><b>อ.ดร.วิสุทธร จิตอารี</b><span>คณะบริหารธุรกิจ มหาวิทยาลัยเชียงใหม่</span></div>'}}
+{id:'summary',part:P8,t:'จำไว้ 4 ข้อ',k:'steps',h:function(){return steps([['จดทุกรายการ ทุกรอบ','วัตถุดิบ บรรจุภัณฑ์ แรงงาน ค่าใช้จ่ายอื่น'],['หารด้วยจำนวนที่ขายได้จริง','ไม่ใช่จำนวนที่ตั้งใจทำ'],['บวกกำไร 30–40% ของต้นทุน แล้วปัดราคา','ดูกำลังซื้อลูกค้าด้วย'],['คิดค่าธรรมเนียมช่องทางขายก่อนตั้งราคา','เพื่อให้กำไรจริงไม่หาย']])+'<p class="callout">คะแนนตอบถูกของท่านในเครื่องนี้: <span class="score" data-o="quizScore"></span></p>'}},
+{id:'sheet',part:P8,t:'ใบบันทึกต้นทุนออนไลน์ ใช้ได้ทุกรอบ',k:'calc',h:function(){return'<p class="lead">ใส่ปริมาณและราคาจริงของรอบนี้ เพิ่มรายการที่ลืมได้ ระบบคิดต้นทุน ราคาขาย และกำไรหรือขาดทุนให้อัตโนมัติ ใช้ต่อในอนาคตได้ที่ลิงก์หน้าสุดท้าย</p>'+calcBox(S.tab,'cost,price,fee,pl',true,true)+'<div><button class="btn" type="button" data-act="copy">คัดลอกสรุปของฉัน</button> <span class="small muted" id="copyMsg" role="status"></span></div>'}},
+{id:'end',k:'end',h:function(){return'<div class="kicker">จบหัวข้อ</div><h1>ขอบคุณ ถามตอบ</h1>'+
+  '<h2>ใบบันทึกต้นทุนออนไลน์ของสินค้าทั้ง 3 ชนิด</h2>'+
+  qrBlock(QR_CALC,CALC_URL,'เปิดเครื่องคำนวณ')+'<div><a class="btn" href="'+CALC_URL+'" target="_blank" rel="noopener">เปิดเครื่องคำนวณต้นทุน</a></div>'+
+  '<div class="meta"><b>อ.ดร.วิสุทธร จิตอารี</b><span>คณะบริหารธุรกิจ มหาวิทยาลัยเชียงใหม่</span></div>'}}
 ];
 
 /* ---------- rendering ---------- */
-var stage=document.getElementById('stage'),cur=1,timer={end:0,t:null,left:600};
+var stage=document.getElementById('stage'),cur=1,timer={end:0,t:null,left:900};
 function head(s){return s.t?(s.part?'<div class="kicker">'+s.part+'</div>':'')+'<h1>'+s.t+'</h1>':''}
 function render(n,keepScroll){
   n=Math.min(Math.max(1,n),SL.length);cur=n;var s=SL[n-1],y=window.scrollY;
+  if(s.id==='sort'&&!sortG&&false)sortStart();
   stage.innerHTML='<article class="slide k-'+s.k+'">'+head(s)+s.h(s)+'</article>';
   stage.querySelectorAll('.calc').forEach(renderCalc);
   refresh();
-  document.title='คิดต้นทุน ตั้งราคา';
+  ALLQ.forEach(function(q){if(q.wk&&S.wk[q.id])wkPaint(q.id)});
   document.getElementById('bNum').textContent=n+' / '+SL.length;
   document.getElementById('bPrev').disabled=n<=1;document.getElementById('bNext').disabled=n>=SL.length;
   document.getElementById('progBar').style.width=(n/SL.length*100)+'%';
@@ -510,8 +683,6 @@ function render(n,keepScroll){
 function go(n){n=Math.min(Math.max(1,n),SL.length);if(('#p'+n)===location.hash)render(n);else location.hash='p'+n}
 function fromHash(){var m=/^#p(\d+)$/.exec(location.hash);render(m?+m[1]:1)}
 window.addEventListener('hashchange',fromHash);
-
-/* timer */
 function tick(){var el=document.getElementById('tm');if(!el)return;var l=timer.t?Math.max(0,Math.round((timer.end-Date.now())/1000)):timer.left;
   el.textContent=String(Math.floor(l/60)).padStart(2,'0')+':'+String(l%60).padStart(2,'0');if(timer.t&&l<=0){clearInterval(timer.t);timer.t=null;timer.left=0}}
 
@@ -519,9 +690,9 @@ function tick(){var el=document.getElementById('tm');if(!el)return;var l=timer.t
 var armed={};
 document.addEventListener('input',function(e){
   var el=e.target.closest&&e.target.closest('[data-k]');if(!el||!stage.contains(el))return;
+  if(el.dataset.k==='wk'){var q=el.dataset.q;S.wk[q]=S.wk[q]||{};S.wk[q][el.dataset.f]=el.value;S.wk[q].checked=false;S.wk[q].ok=false;el.classList.remove('ok','bad');var box=stage.querySelector('[data-wkres="'+q+'"]');if(box)box.hidden=true;save();return}
   var b=BIND[el.dataset.k];if(!b)return;
-  var v=el.dataset.k==='iname'?el.value:el.value;
-  b.s(el.dataset.pid,+el.dataset.i,v);save();refresh();
+  b.s(el.dataset.pid,+el.dataset.i,el.value);save();refresh();
 });
 document.addEventListener('change',function(e){
   var el=e.target;if(el.dataset&&el.dataset.act==='check'){S.check[+el.dataset.i]=el.checked;for(var i=0;i<CHECKS.length;i++)S.check[i]=!!S.check[i];save();refresh()}
@@ -530,16 +701,24 @@ document.addEventListener('click',function(e){
   var el=e.target.closest('[data-act]');if(!el)return;
   var a=el.dataset.act,pid=el.dataset.pid;
   if(a==='quiz'){if(S.quiz[el.dataset.q]!==undefined)return;S.quiz[el.dataset.q]=+el.dataset.i;save();render(cur,true);return}
-  if(a==='add'){S.p[pid].items.push({n:'รายการเพิ่มเติม',v:0,g:'oth'});save();renderCalc(el.closest('.calc'));refresh();return}
+  if(a==='wkcheck'){var q=el.dataset.q;S.wk[q]=S.wk[q]||{};S.wk[q].checked=true;wkPaint(q);save();return}
+  if(a==='wkshow'){wkPaint(el.dataset.q,'show');return}
+  if(a==='add'){S.p[pid].items.push({n:'รายการเพิ่มเติม',q:1,u:'หน่วย',p:0,g:'oth',f:0});save();renderCalc(el.closest('.calc'));refresh();return}
   if(a==='del'){S.p[pid].items.splice(+el.dataset.i,1);save();renderCalc(el.closest('.calc'));refresh();return}
   if(a==='tab'){S.tab=pid;save();render(cur,true);return}
+  if(a==='sub'){S.sub=el.dataset.v;save();renderCalc(el.closest('.calc'));refresh();return}
   if(a==='step'){S.p[pid].step=+el.dataset.v;save();refresh();return}
   if(a==='autoPrice'){S.p[pid].price=null;save();refresh();return}
-  if(a==='reset'){if(!armed[pid]){armed[pid]=1;el.textContent='กดอีกครั้งเพื่อยืนยัน';setTimeout(function(){armed[pid]=0;if(el.isConnected)el.textContent='เริ่มใหม่ด้วยตัวเลขตัวอย่าง'},3000);return}
-    armed[pid]=0;S.p[pid]=mkP(pid);S.am[pid]=mkS().am[pid];S.lab[pid]=mkS().lab[pid];save();var cc=el.closest('.calc');renderCalc(cc);refresh();return}
+  if(a==='reset'){if(!armed[pid]){armed[pid]=1;el.textContent='กดอีกครั้งเพื่อยืนยัน';setTimeout(function(){armed[pid]=0;if(el.isConnected)el.textContent='เริ่มใหม่ด้วยค่าจากสูตร'},3000);return}
+    armed[pid]=0;S.p[pid]=mkP(pid);S.am[pid]=mkAm()[pid];S.lab[pid]=mkLab()[pid];save();renderCalc(el.closest('.calc'));refresh();return}
   if(a==='go'){document.getElementById('toc').hidden=true;go(+el.dataset.n);return}
-  if(a==='tstart'){if(timer.t){clearInterval(timer.t);timer.left=Math.max(0,Math.round((timer.end-Date.now())/1000));timer.t=null;el.textContent='เริ่มนับต่อ'}else{if(timer.left<=0)timer.left=600;timer.end=Date.now()+timer.left*1000;timer.t=setInterval(tick,500);el.textContent='หยุดชั่วคราว'}tick();return}
-  if(a==='treset'){clearInterval(timer.t);timer.t=null;timer.left=600;tick();var sb=stage.querySelector('[data-act="tstart"]');if(sb)sb.textContent='เริ่มนับ';return}
+  if(a==='sortstart'){sortStart();render(cur,true);return}
+  if(a==='sortpick'){var it=SORT_ITEMS[sortG.ord[sortG.i]];sortG.ans=el.dataset.g;if(sortG.ans===it[1])sortG.score++;else sortG.miss.push(sortG.ord[sortG.i]);render(cur,true);return}
+  if(a==='sortnext'){sortG.i++;sortG.ans=null;render(cur,true);return}
+  if(a==='ordstart'){ordStart();render(cur,true);return}
+  if(a==='ordpick'){var k=+el.dataset.i,n=ordG.picked.length;if(k===n){ordG.picked.push(k);ordG.msg=ordG.picked.length===4?'ถูกต้องทั้ง 4 ขั้น':''}else ordG.msg='ยังไม่ใช่ ขั้นที่ '+(n+1)+' คืออะไร ลองใหม่';render(cur,true);return}
+  if(a==='tstart'){if(timer.t){clearInterval(timer.t);timer.left=Math.max(0,Math.round((timer.end-Date.now())/1000));timer.t=null;el.textContent='เริ่มนับต่อ'}else{if(timer.left<=0)timer.left=900;timer.end=Date.now()+timer.left*1000;timer.t=setInterval(tick,500);el.textContent='หยุดชั่วคราว'}tick();return}
+  if(a==='treset'){clearInterval(timer.t);timer.t=null;timer.left=900;tick();var sb=stage.querySelector('[data-act="tstart"]');if(sb)sb.textContent='เริ่มนับ';return}
   if(a==='copy'){var t=summaryText(),m=document.getElementById('copyMsg');
     var done=function(ok){m.textContent=ok?'คัดลอกแล้ว':'คัดลอกไม่ได้ ลองกดค้างที่ข้อความแล้วเลือกคัดลอก'};
     try{navigator.clipboard.writeText(t).then(function(){done(true)},function(){done(false)})}catch(x){done(false)}return}
@@ -547,8 +726,8 @@ document.addEventListener('click',function(e){
 document.getElementById('bPrev').addEventListener('click',function(){go(cur-1)});
 document.getElementById('bNext').addEventListener('click',function(){go(cur+1)});
 function buildToc(){
-  var h='<div><button class="btn" type="button" id="tocClose">ปิดสารบัญ</button>',last='';
-  SL.forEach(function(s,i){var p=s.part||(s.id==='end'?'จบ':'');if(p!==last){if(p)h+='<h2>'+p+'</h2>';last=p}
+  var h='<div><button class="btn" type="button" id="tocClose">ปิดสารบัญ</button>',last=null;
+  SL.forEach(function(s,i){var p=s.part||'';if(i===0)p='';if(s.id==='end')p='จบ';if(p!==last){if(p)h+='<h2>'+p+'</h2>';last=p}
     h+='<button class="it" type="button" data-act="go" data-n="'+(i+1)+'"'+(i+1===cur?' aria-current="true"':'')+'><b>'+(i+1)+'</b><span>'+(s.t||(s.id==='cover'?'หน้าปก':'ขอบคุณ ถามตอบ'))+'</span></button>'});
   var t=document.getElementById('toc');t.innerHTML=h+'</div>';
   document.getElementById('tocClose').addEventListener('click',function(){t.hidden=true});
@@ -561,12 +740,12 @@ document.getElementById('bSm').addEventListener('click',function(){S.scale=Math.
 document.getElementById('bLg').addEventListener('click',function(){S.scale=Math.min(1.5,+(S.scale+.1).toFixed(2));applyScale();save()});
 document.addEventListener('keydown',function(e){
   if(e.target.matches&&e.target.matches('input,select,textarea'))return;
-  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '&&e.target===document.body){e.preventDefault();go(cur+1)}
+  if(e.key==='ArrowRight'||e.key==='PageDown'||(e.key===' '&&e.target===document.body)){e.preventDefault();go(cur+1)}
   else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1)}
   else if(e.key==='Escape'){document.getElementById('toc').hidden=true}
 });
 applyScale();fromHash();
+window.__T={S:S,compute:compute,SL:SL,DEF:DEF,wkEval:wkEval,ALLQ:ALLQ};
 })();
 </script>
-
 </body></html>

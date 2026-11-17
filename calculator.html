@@ -1,0 +1,306 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body><title>เครื่องคำนวณต้นทุนจริง</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;500;600;700&display=swap">
+<style>
+
+/* Layout: one slide at a time. Projector = wide column with big type; phone = same content reflowed to one column, thumb-height buttons, fixed bottom nav.
+   Palette from natural-dyed eri silk: indigo ink, lac red, saffron, teal-green. Products are told apart by colour AND badge letter. */
+:root{
+  --bg:#F2F4F8; --surface:#FFFFFF; --surface2:#E7EBF4; --fg:#18213A; --muted:#4B5673; --line:#C5CDE0;
+  --accent:#26418F; --accent-ink:#FFFFFF; --accent-soft:#DCE4F8; --input:#FFFFFF; --focus:#C46A00;
+  --p1:#A8302B; --p1s:#F6DEDC; --p2:#8A5A00; --p2s:#FBEBC8; --p3:#1F6B5C; --p3s:#D5EEE8;
+  --ok:#17673A; --oks:#D9F0E2; --warn:#7A4E00; --warns:#FBEBC8; --bad:#A8302B; --bads:#F8DDDB;
+  --f-display:'Prompt','Noto Sans Thai','Tahoma',sans-serif; --f-body:'Sarabun','Noto Sans Thai','Tahoma',sans-serif;
+  --fs:clamp(19px,calc(1.1vw + 14px),30px); --s:1;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1426; --surface:#182039; --surface2:#212B49; --fg:#ECEFF8; --muted:#A9B3CF; --line:#33405F;
+  --accent:#9DB3F5; --accent-ink:#0F1426; --accent-soft:#26335C; --input:#0F1426; --focus:#F0C365;
+  --p1:#F29A93; --p1s:#3A1F27; --p2:#F0C365; --p2s:#3A2E15; --p3:#7FD3BE; --p3s:#153A35;
+  --ok:#7FD9A0; --oks:#143323; --warn:#F0C365; --warns:#3A2E15; --bad:#F29A93; --bads:#3A1F27; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1426; --surface:#182039; --surface2:#212B49; --fg:#ECEFF8; --muted:#A9B3CF; --line:#33405F;
+  --accent:#9DB3F5; --accent-ink:#0F1426; --accent-soft:#26335C; --input:#0F1426; --focus:#F0C365;
+  --p1:#F29A93; --p1s:#3A1F27; --p2:#F0C365; --p2s:#3A2E15; --p3:#7FD3BE; --p3s:#153A35;
+  --ok:#7FD9A0; --oks:#143323; --warn:#F0C365; --warns:#3A2E15; --bad:#F29A93; --bads:#3A1F27; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:calc(var(--fs)*var(--s));line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0;min-height:100dvh}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.muted{color:var(--muted)}
+
+.top{max-width:1240px;margin:0 auto;display:flex;flex-wrap:wrap;gap:.5em 1em;align-items:center;justify-content:space-between;padding-block:.7em .4em}
+.brand{font-family:var(--f-display);font-weight:600;font-size:.85em;color:var(--muted)}
+.tools{display:flex;gap:.4em;flex-wrap:wrap}
+.tools button{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.3em .8em;min-height:2.6em;font-size:.8em;font-weight:600}
+.tools button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.prog{max-width:1240px;margin:0 auto;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+
+main{max-width:1240px;margin:0 auto;padding-block:1em 7.5em;outline:none}
+.slide{display:grid;gap:.9em;align-content:start}
+.kicker{font-family:var(--f-display);font-weight:600;font-size:.8em;color:var(--accent)}
+h1{font-family:var(--f-display);font-weight:600;font-size:calc(1.45em + 1vw);line-height:1.3;margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:600;font-size:1.15em;margin:0}
+h3{font-family:var(--f-display);font-weight:600;font-size:1em;margin:0}
+p{margin:0}
+.lead{font-size:1.1em;max-width:34em}
+.small{font-size:.8em}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15em),1fr));gap:.8em}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1em;display:grid;gap:.4em;align-content:start;min-width:0}
+.card .big{font-family:var(--f-display);font-weight:600;font-size:1.25em;line-height:1.3}
+.badge{display:inline-grid;place-items:center;width:2em;height:2em;border-radius:50%;font-family:var(--f-display);font-weight:700;background:var(--c);color:var(--bg);flex:none}
+.p1{--c:var(--p1);--cs:var(--p1s)} .p2{--c:var(--p2);--cs:var(--p2s)} .p3{--c:var(--p3);--cs:var(--p3s)}
+.pname{display:flex;gap:.6em;align-items:center}
+.pname b{font-family:var(--f-display);color:var(--c)}
+.callout{background:var(--accent-soft);border-radius:12px;padding:.8em 1em;max-width:40em}
+.stat{font-family:var(--f-display);font-weight:700;font-size:2em;line-height:1.1;color:var(--accent)}
+.steps{display:grid;gap:.7em;counter-reset:s;padding:0;margin:0;list-style:none}
+.steps li{counter-increment:s;display:grid;grid-template-columns:auto 1fr;gap:.9em;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:.8em 1em;align-items:start}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:1.9em;height:1.9em;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-weight:700}
+.steps b{font-family:var(--f-display)}
+.tag{display:inline-block;font-size:.72em;font-weight:600;border-radius:99px;padding:.05em .7em;background:var(--surface2);color:var(--muted);white-space:nowrap}
+.hero{font-family:var(--f-display);font-weight:600;font-size:calc(1.25em + 1.4vw);line-height:1.4;max-width:22em;text-wrap:balance}
+
+/* cover */
+.k-cover{padding-top:1em;gap:1.1em}
+.k-cover h1{font-size:calc(1.7em + 1.6vw);max-width:16em}
+.meta{display:grid;gap:.15em}
+.meta b{font-family:var(--f-display)}
+
+.qr{display:flex;gap:1em;align-items:center;flex-wrap:wrap}
+.qr svg{width:min(10em,55vw);height:auto;border-radius:12px;flex:none}
+.qr a{color:var(--accent);font-weight:600;overflow-wrap:anywhere}
+/* quiz */
+.q{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1em;display:grid;gap:.7em}
+.q .qt{font-weight:600;font-size:1.05em}
+.opts{display:grid;gap:.5em}
+.opt{display:flex;gap:.7em;text-align:left;align-items:center;background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:.6em .9em;min-height:3em;width:100%}
+.opt .m{width:1.6em;height:1.6em;border-radius:50%;display:grid;place-items:center;flex:none;font-weight:700;font-size:.85em;border:2px solid var(--muted)}
+.opt.right{border-color:var(--ok);background:var(--oks)} .opt.right .m{background:var(--ok);color:var(--bg);border-color:var(--ok)}
+.opt.wrong{border-color:var(--bad);background:var(--bads)} .opt.wrong .m{background:var(--bad);color:var(--bg);border-color:var(--bad)}
+.exp{border-radius:10px;padding:.6em .9em;background:var(--surface2)}
+.score{font-family:var(--f-display);font-weight:600}
+
+/* checklist */
+.chk{display:grid;gap:.5em}
+.chk label{display:grid;grid-template-columns:auto 1fr;gap:.8em;align-items:start;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:.6em .9em;cursor:pointer}
+.chk input{width:1.5em;height:1.5em;margin:.15em 0 0;accent-color:var(--accent)}
+.chk label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.chk small{display:block;color:var(--muted)}
+
+/* calculator */
+.calc{display:grid;gap:1em}
+.tabs{display:flex;gap:.5em;flex-wrap:wrap}
+.tabs button{display:flex;gap:.5em;align-items:center;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:.4em .9em .4em .5em;min-height:3em;font-weight:600}
+.tabs button[aria-selected="true"]{border-color:var(--c);background:var(--cs)}
+.part{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1em;display:grid;gap:.8em}
+.part>h2{display:flex;gap:.5em;align-items:baseline;flex-wrap:wrap}
+.rows{display:grid;gap:.5em}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 6.5em auto;gap:.5em;align-items:center}
+.row .nm{min-width:0;display:grid;gap:.1em}
+.row .nm span.t{font-weight:500}
+input[type=number],input[type=text]{width:100%;min-width:0;min-height:2.7em;padding:.3em .6em;border:2px solid var(--accent);border-radius:10px;background:var(--input);color:var(--fg);font-variant-numeric:tabular-nums}
+input[type=number]{text-align:right}
+input[type=range]{width:100%;accent-color:var(--accent);height:2.2em}
+.ib{background:none;border:1px solid var(--line);border-radius:10px;min-width:2.6em;min-height:2.6em;color:var(--muted);font-size:.9em}
+.btn{background:var(--surface);border:2px solid var(--accent);color:var(--accent);border-radius:12px;padding:.4em 1em;min-height:2.8em;font-weight:600}
+.btn.sec{border-color:var(--line);color:var(--muted)}
+.eq{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:.5em;align-items:center}
+.eq .op{font-family:var(--f-display);font-size:1.6em;color:var(--muted);text-align:center}
+.eq .t{background:var(--bg);border-radius:12px;padding:.6em .8em;display:grid;gap:.1em;min-width:0}
+.eq .t>span{font-size:.8em;color:var(--muted)}
+.eq .t b{font-family:var(--f-display);font-size:1.6em;line-height:1.2;font-variant-numeric:tabular-nums}
+.eq .t i{font-style:normal;font-size:.8em;color:var(--muted)}
+.eq .t.hi{background:var(--accent);color:var(--accent-ink)}
+.eq .t.hi>span,.eq .t.hi i{color:var(--accent-ink);opacity:.9}
+.eq .t input{min-height:2.2em}
+.kv{display:grid;gap:.3em}
+.kv>div{display:flex;justify-content:space-between;gap:1em;align-items:baseline;border-bottom:1px dashed var(--line);padding-bottom:.25em}
+.kv b{font-family:var(--f-display);font-variant-numeric:tabular-nums;text-align:right}
+.seg{display:flex;gap:.4em;flex-wrap:wrap;align-items:center}
+.seg button{background:var(--bg);border:2px solid var(--line);border-radius:10px;min-width:3em;min-height:2.6em;font-weight:600}
+.seg button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.lab{display:flex;justify-content:space-between;gap:1em;font-weight:600;align-items:baseline}
+.chip{display:inline-block;border-radius:10px;padding:.3em .8em;font-weight:600;font-size:.9em}
+.chip.ok{background:var(--oks);color:var(--ok)} .chip.warn{background:var(--warns);color:var(--warn)} .chip.bad{background:var(--bads);color:var(--bad)} .chip.info{background:var(--accent-soft);color:var(--accent)}
+.tblwrap{overflow-x:auto;border-radius:12px}
+table{border-collapse:collapse;width:100%;background:var(--surface);font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:.45em .7em;text-align:left;vertical-align:top}
+td.n,th.n{text-align:right}
+th{background:var(--surface2);font-family:var(--f-display);font-weight:600}
+tfoot td{font-weight:700;background:var(--accent-soft)}
+.blank td{height:2.2em}
+.timer{font-family:var(--f-display);font-weight:700;font-size:calc(2.5em + 3vw);font-variant-numeric:tabular-nums;line-height:1.1}
+
+/* nav */
+.bar{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:1fr auto 1fr;gap:.6em;align-items:center;background:var(--surface);border-top:1px solid var(--line);
+  padding:.6em max(16px,env(safe-area-inset-left,0px)) calc(.6em + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));z-index:5}
+.bar button{min-height:3.1em;border-radius:12px;border:2px solid var(--line);background:var(--bg);font-weight:600;padding:.2em .8em}
+.bar button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.bar button:disabled{opacity:.4}
+.bar button{white-space:nowrap}
+.bar .pg{border:none;background:none;min-width:5.5em}
+
+/* teacher notes */
+.notes{display:none;background:var(--warns);color:var(--fg);border:1px dashed var(--warn);border-radius:12px;padding:.7em 1em;font-size:.85em}
+.notes b{color:var(--warn);margin-right:.4em}
+body.inst .notes{display:block}
+
+/* contents */
+.toc{position:fixed;inset:0;background:var(--bg);z-index:20;overflow:auto;padding-block:max(1em,env(safe-area-inset-top,0px)) calc(2em + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.toc>div{max-width:760px;margin:0 auto;display:grid;gap:.4em}
+.toc h2{margin-top:.8em}
+.toc .it{display:grid;grid-template-columns:2.2em 1fr;gap:.5em;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.5em .8em;min-height:2.8em;width:100%}
+.toc .it[aria-current="true"]{border-color:var(--accent);background:var(--accent-soft)}
+
+@media (max-width:640px){
+  .eq{grid-template-columns:1fr}
+  .eq .op{line-height:1}
+  .row{grid-template-columns:minmax(0,1fr) 5.6em auto}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.itm{display:grid;gap:.3em;padding:.6em 0;border-bottom:1px dashed var(--line)}
+.itm .nm{display:flex;gap:.5em;align-items:center;flex-wrap:wrap}
+.itm .nm input{flex:1 1 10em}
+.qp{display:flex;flex-wrap:wrap;gap:.4em;align-items:center}
+.qp input{width:5.8em}
+.qp .u,.qp .x{color:var(--muted);font-size:.85em}
+.qp .amt{margin-left:auto;font-family:var(--f-display);font-weight:600}
+main{max-width:46rem;margin:0 auto;padding:1em 0 4em;display:grid;gap:1em}
+.hist td,.hist th{font-size:.9em}
+.hrow{display:flex;gap:.5em;flex-wrap:wrap;align-items:center}
+.hrow input[type=text]{width:9em}
+</style>
+<header class="top"><div class="brand">เครื่องคำนวณต้นทุนจริง · กลุ่มทอผ้าบ้านหนองหญ้าปล้อง</div>
+<div class="tools"><button id="bSm" type="button" aria-label="ลดขนาดตัวอักษร">ก−</button><button id="bLg" type="button" aria-label="เพิ่มขนาดตัวอักษร">ก+</button></div></header>
+<main id="app"></main>
+<script>
+(function(){
+'use strict';
+var KEY='eri-calc-v1';
+var GROUP={mat:'ค่าวัตถุดิบ',lab:'ค่าแรงงาน',pack:'ค่าบรรจุภัณฑ์',prod:'ค่าใช้จ่ายในการผลิตอื่นๆ',oth:'ค่าใช้จ่ายอื่น'};
+var DEF={
+  dry:{short:'น้ำพริกแห้ง',sub:'สูตรชุมชน',unit:'กระปุก',badge:'ก',cls:'p1',made:20,
+    batch:'ดักแด้ 1 กก. · ใช้เวลา 1 ชั่วโมง',equip:'เตาแก๊ส ครก สาก ถาดตาก กะทะ',
+    items:[['ดักแด้ไหม',1,'กก.',100,'mat'],['พริกแห้ง',0.1,'กก.',200,'mat'],['กระเทียม',0.1,'กก.',200,'mat'],['หอมแดง',0.1,'กก.',200,'mat'],['ปลาร้า',1,'ช้อนโต๊ะ',5,'mat'],['เกลือ',1,'ช้อนโต๊ะ',5,'mat'],['ผงนัว',1,'ช้อนโต๊ะ',5,'mat'],['ใบมะกรูด',0.1,'กก.',50,'mat'],['ตะไคร้',0.1,'กก.',200,'mat'],
+      ['กระปุก ฝา ฉลาก',20,'ชุด',0,'pack',1],['แก๊ส',1,'ชั่วโมง',0,'prod',1],['ค่าแรง',1,'ชั่วโมง',0,'lab',1]]},
+  crisp:{short:'ข้าวเกรียบดักแด้',sub:'สูตรชุมชน',unit:'ถุง',badge:'ข',cls:'p2',made:15,
+    batch:'ดักแด้ 300 กรัม ได้ 15 ถุง · ใช้เวลา 4 วัน รวมตากแผ่น',equip:'หม้อนึ่ง ครก ถาดตาก',
+    items:[['ดักแด้ไหม',0.3,'กก.',100,'mat'],['แป้งมันสำปะหลัง',0.25,'กก.',40,'mat'],['เกลือ',1,'ช้อนชา',0.5,'mat'],['พริกไทยป่น',0.5,'ช้อนชา',7,'mat'],['น้ำมันพืช',1,'ลิตร',46,'mat'],
+      ['ถุงแกงกันร้อน (1 ชุด 15 ใบ)',1,'ชุด',5,'pack'],['ถ่าน',1,'ชั่วโมง',20,'prod'],['ค่าแรง',0,'ชั่วโมง',0,'lab',1]]},
+  fresh:{short:'น้ำพริกสด',sub:'สูตรชุมชน',unit:'กระปุก',badge:'ค',cls:'p3',made:14,
+    batch:'ดักแด้ 1 กก. ได้ 14 กระปุก · ใช้เวลา 6 ชั่วโมง 30 นาที',equip:'เตาถ่าน เตาอบโซล่าเซล ครกและสาก ถาดตาก ทัพพี ถ้วยแบ่งวัตถุดิบ ช้อน ตาชั่ง',
+    items:[['ดักแด้ไหม',1,'กก.',100,'mat'],['พริกสด',0.1,'กก.',200,'mat'],['กระเทียม',0.1,'กก.',200,'mat'],['หอมแดง',0.1,'กก.',200,'mat'],['ผงนัว',1,'ช้อนชา',5,'mat'],['เกลือ',1,'ช้อนชา',5,'mat'],['ใบมะกรูด',0.5,'กก.',60,'mat'],['มะขามเปียก (2 ช้อนโต๊ะ)',1,'ชุด',15,'mat'],['น้ำตาลทราย (3 ช้อนโต๊ะ)',1,'ชุด',10,'mat'],['น้ำมันพืช',1,'กก.',25,'mat'],
+      ['กระปุก ฝา ฉลาก',14,'ชุด',0,'pack',1],['ถ่าน/ไฟฟ้า เตาอบ',6.5,'ชั่วโมง',0,'prod',1],['ค่าแรง',6.5,'ชั่วโมง',0,'lab',1]]}
+};
+var PIDS=['dry','crisp','fresh'];
+function mkP(pid){var d=DEF[pid];return{items:d.items.map(function(x){return{n:x[0],q:x[1],u:x[2],p:x[3],g:x[4]}}),made:d.made,profit:35,step:1,price:null,fee:10,sold:null,hist:[]}}
+var S={p:{},tab:'crisp',scale:1};PIDS.forEach(function(k){S.p[k]=mkP(k)});
+try{var raw=JSON.parse(localStorage.getItem(KEY)||'null');if(raw){PIDS.forEach(function(k){if(raw.p&&raw.p[k]&&Array.isArray(raw.p[k].items))S.p[k]=Object.assign(mkP(k),raw.p[k])});if(PIDS.indexOf(raw.tab)>=0)S.tab=raw.tab;if(typeof raw.scale==='number')S.scale=Math.min(1.5,Math.max(.85,raw.scale))}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function fmt(x,d){d=d==null?2:d;return isFinite(x)?(+x.toFixed(d)).toLocaleString('th-TH',{maximumFractionDigits:d}):'–'}
+function num(v){var x=parseFloat(String(v).replace(/,/g,''));return isFinite(x)&&x>=0?x:0}
+function amt(it){return Math.round(num(it.q)*num(it.p)*100)/100}
+function compute(pid){
+  var s=S.p[pid],total=0;s.items.forEach(function(i){total+=amt(i)});
+  var made=num(s.made),unit=made>0?total/made:NaN,step=s.step||1,sug=unit*(1+s.profit/100);
+  var rounded=Math.max(step,Math.round(sug/step)*step),manual=s.price!==null&&s.price!==''&&isFinite(parseFloat(s.price));
+  var sell=manual?num(s.price):rounded,recv=sell*(1-s.fee/100),real=recv-unit,sold=(s.sold===null||s.sold===undefined||s.sold==='')?made:num(s.sold);
+  return{total:total,made:made,unit:unit,lo:unit*1.3,hi:unit*1.4,sug:sug,sell:sell,manual:manual,gpct:(sell-unit)/unit*100,recv:recv,real:real,realPct:real/unit*100,need:unit*(1+s.profit/100)/(1-s.fee/100),sold:sold,revT:sell*sold,recvT:recv*sold,plT:recv*sold-total};
+}
+function groupSums(pid){var g={mat:0,pack:0,lab:0,oth:0};S.p[pid].items.forEach(function(i){g[i.g||'oth']+=amt(i)});return g}
+function pn(pid){var d=DEF[pid];return'<span class="pname '+d.cls+'"><span class="badge" aria-hidden="true">'+d.badge+'</span><b>'+d.short+'</b></span>'}
+var app=document.getElementById('app');
+function histStats(h){if(!h.length)return null;var u=h.map(function(r){return r.unit}),s=0;u.forEach(function(x){s+=x});return{avg:s/u.length,min:Math.min.apply(null,u),max:Math.max.apply(null,u)}}
+function render(){
+  var pid=S.tab,d=DEF[pid],s=S.p[pid],h='';
+  h+='<div class="tabs" role="tablist" aria-label="เลือกผลิตภัณฑ์">'+PIDS.map(function(k){var e=DEF[k];return'<button type="button" role="tab" class="'+e.cls+'" data-act="tab" data-pid="'+k+'" aria-selected="'+(k===pid)+'"><span class="badge" aria-hidden="true">'+e.badge+'</span>'+e.short+'</button>'}).join('')+'</div>';
+  h+='<div class="calc '+d.cls+'" style="display:grid;gap:1em">';
+  h+='<section class="part"><h2>ขั้นที่ 1 รายการต้นทุนทั้งรอบ <span class="small muted">ปริมาณ × ราคาต่อหน่วย</span></h2><p class="muted small">'+esc(d.batch)+'</p><div>';
+  s.items.forEach(function(it,i){
+    h+='<div class="itm"><div class="nm"><input type="text" data-k="n" data-i="'+i+'" aria-label="ชื่อรายการ" id="n'+i+'"><select data-k="g" data-i="'+i+'" aria-label="กลุ่มต้นทุน" id="g'+i+'">'+Object.keys(GROUP).map(function(g){return'<option value="'+g+'">'+GROUP[g]+'</option>'}).join('')+'</select></div>'+
+     '<div class="qp"><input type="number" inputmode="decimal" min="0" step="any" data-k="q" data-i="'+i+'" id="q'+i+'" aria-label="ปริมาณ"><input type="text" data-k="u" data-i="'+i+'" id="u'+i+'" style="width:5em" aria-label="หน่วย"><span class="x">×</span>'+
+     '<input type="number" inputmode="decimal" min="0" step="any" data-k="p" data-i="'+i+'" id="p'+i+'" aria-label="ราคาต่อหน่วย"><span class="u">บาท/หน่วย</span><span class="x">=</span><span class="amt"><span data-o="amt" data-i="'+i+'"></span> บาท</span><button class="ib" type="button" data-act="del" data-i="'+i+'" aria-label="ลบรายการ">✕</button></div></div>';
+  });
+  h+='</div><div><button class="btn" type="button" data-act="add">+ เพิ่มรายการ</button></div>';
+  h+='<div class="kv"><div><span>วัตถุดิบ</span><b><span data-o="g_mat"></span> บาท</b></div><div><span>บรรจุภัณฑ์</span><b><span data-o="g_pack"></span> บาท</b></div><div><span>แรงงาน</span><b><span data-o="g_lab"></span> บาท</b></div><div><span>ค่าใช้จ่ายอื่น</span><b><span data-o="g_oth"></span> บาท</b></div></div></section>';
+  h+='<section class="part"><h2>ขั้นที่ 2 ต้นทุนต่อ'+d.unit+'</h2><div class="eq"><div class="t"><span>ต้นทุนรวม</span><b data-o="total"></b><i>บาท</i></div><div class="op" aria-hidden="true">÷</div><div class="t"><span>ได้'+d.unit+'ที่ขายได้จริง</span><input type="number" inputmode="numeric" min="0" data-k="made" id="made" aria-label="จำนวนที่ขายได้จริง"><i>'+d.unit+'</i></div><div class="op" aria-hidden="true">=</div><div class="t hi"><span>ต้นทุนต่อ'+d.unit+'</span><b data-o="unit"></b><i>บาท</i></div></div></section>';
+  h+='<section class="part"><h2>ขั้นที่ 3 ตั้งราคาขาย</h2><div class="kv"><div><span>กำไร 30–40% ของต้นทุน ได้ราคา</span><b><span data-o="lo"></span> – <span data-o="hi"></span> บาท</b></div></div>'+
+   '<div class="lab"><label for="profit">กำไรที่ต้องการ</label><span><span data-o="profit"></span>%</span></div><input type="range" id="profit" min="0" max="60" step="5" data-k="profit">'+
+   '<div class="seg" role="group" aria-label="ปัดราคาเป็นหลัก"><span>ปัดราคาเป็นหลัก</span>'+[1,5,10].map(function(v){return'<button type="button" data-act="step" data-v="'+v+'" aria-pressed="false">'+v+'</button>'}).join('')+'</div>'+
+   '<div class="eq"><div class="t"><span>ราคาที่ตั้ง</span><input type="number" inputmode="decimal" min="0" data-k="price" id="price" aria-label="ราคาขาย"><i>บาท</i></div><div class="op" aria-hidden="true">→</div><div class="t hi"><span>กำไรต่อ'+d.unit+'</span><b data-o="pu"></b><i>บาท (<span data-o="gpct"></span>%)</i></div></div>'+
+   '<div><button class="btn sec" type="button" data-act="auto">ใช้ราคาที่คำนวณให้</button></div></section>';
+  h+='<section class="part"><h2>ขั้นที่ 4 ตรวจค่าธรรมเนียมช่องทางขาย</h2><div class="lab"><label for="fee">ค่าธรรมเนียม (ร้อยละของราคาขาย)</label><span><span data-o="fee"></span>%</span></div><input type="range" id="fee" min="0" max="30" step="1" data-k="fee">'+
+   '<div class="kv"><div><span>เงินที่ได้รับจริง</span><b><span data-o="recv"></span> บาท</b></div><div><span>กำไรจริงหลังหักค่าธรรมเนียม</span><b><span data-o="real"></span> บาท (<span data-o="realPct"></span>%)</b></div><div><span>ราคาที่ควรตั้งให้ได้กำไรตามเป้า</span><b><span data-o="need"></span> บาท</b></div></div><div><span class="chip" data-chip></span></div></section>';
+  h+='<section class="part"><h2>ขั้นที่ 5 กำไรหรือขาดทุนของรอบนี้</h2><div class="eq"><div class="t"><span>ขายได้จริง</span><input type="number" inputmode="numeric" min="0" data-k="sold" id="sold" aria-label="จำนวนที่ขายได้"><i>'+d.unit+'</i></div><div class="op" aria-hidden="true">×</div><div class="t"><span>เงินที่ได้ต่อ'+d.unit+'</span><b data-o="recv"></b><i>บาท</i></div><div class="op" aria-hidden="true">=</div><div class="t"><span>เงินที่ได้ทั้งหมด</span><b data-o="recvT"></b><i>บาท</i></div></div>'+
+   '<div class="eq"><div class="t"><span>เงินที่ได้ทั้งหมด</span><b data-o="recvT"></b><i>บาท</i></div><div class="op" aria-hidden="true">−</div><div class="t"><span>ต้นทุนรวม</span><b data-o="total"></b><i>บาท</i></div><div class="op" aria-hidden="true">=</div><div class="t hi"><span data-o="plWord"></span><b data-o="plT"></b><i>บาท</i></div></div><div><span class="chip" data-chip2></span></div></section>';
+  h+='<section class="part"><h2>บันทึกรอบการผลิต <span class="small muted">เก็บประวัติเพื่อดูต้นทุนเฉลี่ย</span></h2><div class="hrow"><input type="text" id="hl" placeholder="ชื่อรอบ เช่น รอบ 1 ธ.ค." aria-label="ชื่อรอบ"><button class="btn" type="button" data-act="hsave">บันทึกรอบนี้</button></div><div data-hist></div></section>';
+  h+='<section class="part"><div class="hrow"><button class="btn" type="button" data-act="copy">คัดลอกสรุป</button><button class="btn sec" type="button" data-act="reset">เริ่มใหม่ด้วยค่าจากสูตร</button><span class="small muted" id="msg" role="status"></span></div><p class="small muted">ข้อมูลเก็บไว้ในเครื่องนี้เท่านั้น</p></section></div>';
+  app.innerHTML=h;
+  s.items.forEach(function(it,i){document.getElementById('n'+i).value=it.n;document.getElementById('g'+i).value=it.g||'oth';document.getElementById('u'+i).value=it.u});
+  refresh(true);
+}
+function refresh(full){
+  var pid=S.tab,s=S.p[pid],c=compute(pid),gs=groupSums(pid);
+  app.querySelectorAll('[data-o]').forEach(function(el){
+    var k=el.dataset.o,v='';
+    if(k==='amt')v=fmt(amt(s.items[+el.dataset.i]||{}));
+    else if(k.indexOf('g_')===0)v=fmt(gs[k.slice(2)]);
+    else if(k==='profit')v=fmt(s.profit,0);else if(k==='fee')v=fmt(s.fee,0);
+    else if(k==='pu')v=fmt(c.sell-c.unit);else if(k==='gpct'||k==='realPct')v=fmt(c[k],0);
+    else if(k==='made'||k==='sold')v=fmt(c[k],0);else if(k==='plT')v=fmt(Math.abs(c.plT));else if(k==='plWord')v=c.plT>=0?'กำไร':'ขาดทุน';else v=fmt(c[k]);
+    el.textContent=v});
+  app.querySelectorAll('[data-k]').forEach(function(el){
+    if(document.activeElement===el)return;var k=el.dataset.k,v;
+    if(k==='made')v=s.made;else if(k==='profit')v=s.profit;else if(k==='fee')v=s.fee;else if(k==='price')v=+c.sell.toFixed(2);else if(k==='sold')v=c.sold;else return;
+    if(String(el.value)!==String(v))el.value=v});
+  app.querySelectorAll('[data-act="step"]').forEach(function(b){b.setAttribute('aria-pressed',String(s.step===+b.dataset.v))});
+  var ch=app.querySelector('[data-chip]'),t,cl;
+  if(!(c.unit>0)){cl='info';t='ใส่จำนวนที่ขายได้จริงก่อน'}else if(c.real<0){cl='bad';t='✕ หลังหักค่าธรรมเนียม ขาดทุน'}else if(c.sell<c.unit){cl='bad';t='✕ ราคาต่ำกว่าต้นทุน'}else if(c.realPct<29.5){cl='warn';t='! กำไรจริงต่ำกว่า 30% ของต้นทุน'}else{cl='ok';t='✓ กำไรจริงยังได้ตามเป้า'}
+  ch.className='chip '+cl;ch.textContent=t;
+  var c2=app.querySelector('[data-chip2]');if(c2){if(!(c.unit>0)){c2.className='chip info';c2.textContent='ใส่จำนวนที่ขายได้จริงก่อน'}else if(c.plT<0){c2.className='chip bad';c2.textContent='✕ ขาดทุน '+fmt(-c.plT)+' บาท ต้องขึ้นราคา หรือลดต้นทุน'}else if(c.plT===0){c2.className='chip warn';c2.textContent='! เท่าทุน'}else{c2.className='chip ok';c2.textContent='✓ กำไร '+fmt(c.plT)+' บาท'}}
+  var hb=app.querySelector('[data-hist]');
+  if(full||hb.dataset.n!==String(s.hist.length)){
+    hb.dataset.n=String(s.hist.length);var st=histStats(s.hist);
+    hb.innerHTML=s.hist.length?'<div class="tblwrap hist"><table><thead><tr><th>รอบ</th><th class="n">ต้นทุนรวม</th><th class="n">ได้จริง</th><th class="n">ต้นทุน/'+DEF[pid].unit+'</th><th></th></tr></thead><tbody>'+s.hist.map(function(r,i){return'<tr><td>'+esc(r.l)+'</td><td class="n">'+fmt(r.total)+'</td><td class="n">'+fmt(r.made,0)+'</td><td class="n">'+fmt(r.unit)+'</td><td><button class="ib" type="button" data-act="hdel" data-i="'+i+'" aria-label="ลบรอบ">✕</button></td></tr>'}).join('')+'</tbody></table></div><div class="kv"><div><span>ต้นทุนเฉลี่ย</span><b>'+fmt(st.avg)+' บาท</b></div><div><span>ต่ำสุด</span><b>'+fmt(st.min)+' บาท</b></div><div><span>สูงสุด</span><b>'+fmt(st.max)+' บาท</b></div></div><p class="small muted">ตั้งราคาจากต้นทุนเฉลี่ยหรือสูงสุด เพื่อไม่ให้รอบแพงแล้วขาดทุน</p>':'<p class="small muted">ยังไม่มีรอบที่บันทึก</p>';
+  }
+}
+function summary(){var t='สรุปต้นทุนและราคา\n';PIDS.forEach(function(k){var c=compute(k),d=DEF[k];t+='\n'+d.short+'\n  ต้นทุนรวม '+fmt(c.total)+' บาท ÷ '+fmt(c.made,0)+' '+d.unit+' = '+fmt(c.unit)+' บาทต่อ'+d.unit+'\n  ราคาขาย '+fmt(c.sell)+' บาท กำไร '+fmt(c.sell-c.unit)+' บาทต่อ'+d.unit+'\n  ขายได้ '+fmt(c.sold,0)+' '+d.unit+' '+(c.plT>=0?'กำไร ':'ขาดทุน ')+fmt(Math.abs(c.plT))+' บาท\n'});return t}
+var armed=0;
+app.addEventListener('input',function(e){
+  var el=e.target,k=el.dataset.k;if(!k)return;var s=S.p[S.tab],i=+el.dataset.i;
+  if(k==='n')s.items[i].n=el.value;else if(k==='u')s.items[i].u=el.value;else if(k==='g')s.items[i].g=el.value;
+  else if(k==='q'||k==='p')s.items[i][k]=num(el.value);
+  else if(k==='made')s.made=num(el.value);else if(k==='profit')s.profit=num(el.value);else if(k==='fee')s.fee=num(el.value);
+  else if(k==='price')s.price=el.value===''?null:num(el.value);else if(k==='sold')s.sold=el.value===''?null:num(el.value);
+  save();refresh();
+});
+app.addEventListener('change',function(e){if(e.target.dataset.k==='g'){S.p[S.tab].items[+e.target.dataset.i].g=e.target.value;save();refresh()}});
+app.addEventListener('click',function(e){
+  var el=e.target.closest('[data-act]');if(!el)return;var a=el.dataset.act,s=S.p[S.tab];
+  if(a==='tab'){S.tab=el.dataset.pid;save();render();return}
+  if(a==='add'){s.items.push({n:'รายการเพิ่มเติม',q:1,u:'หน่วย',p:0,g:'oth'});save();render();return}
+  if(a==='del'){s.items.splice(+el.dataset.i,1);save();render();return}
+  if(a==='step'){s.step=+el.dataset.v;save();refresh();return}
+  if(a==='auto'){s.price=null;save();refresh();return}
+  if(a==='hsave'){var c=compute(S.tab),l=document.getElementById('hl').value.trim()||('รอบที่ '+(s.hist.length+1));if(!(c.unit>0))return;s.hist.push({l:l,total:c.total,made:c.made,unit:c.unit});save();render();return}
+  if(a==='hdel'){s.hist.splice(+el.dataset.i,1);save();render();return}
+  if(a==='reset'){if(!armed){armed=1;el.textContent='กดอีกครั้งเพื่อยืนยัน';setTimeout(function(){armed=0;if(el.isConnected)el.textContent='เริ่มใหม่ด้วยค่าจากสูตร'},3000);return}armed=0;S.p[S.tab]=mkP(S.tab);save();render();return}
+  if(a==='copy'){var m=document.getElementById('msg'),t=summary();try{navigator.clipboard.writeText(t).then(function(){m.textContent='คัดลอกแล้ว'},function(){m.textContent='คัดลอกไม่ได้'})}catch(x){m.textContent='คัดลอกไม่ได้'}}
+});
+function applyScale(){document.documentElement.style.setProperty('--s',S.scale)}
+document.getElementById('bSm').addEventListener('click',function(){S.scale=Math.max(.85,+(S.scale-.1).toFixed(2));applyScale();save()});
+document.getElementById('bLg').addEventListener('click',function(){S.scale=Math.min(1.5,+(S.scale+.1).toFixed(2));applyScale();save()});
+applyScale();render();
+window.__C={S:S,compute:compute};
+})();
+</script>
+</body></html>
